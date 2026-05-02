@@ -36,5 +36,14 @@
     </footer>
 
     <script src="script.js"></script>
+
+<section id="splitter" class="tool-box">
+    <h2>Split PDF</h2>
+    <input type="file" id="split-input" accept=".pdf">
+    <input type="text" id="page-range" placeholder="e.g., 1-2 (Leave blank for all pages)">
+    <button onclick="splitPdf()">Split & Download</button>
+    <p id="split-status"></p>
+</section>
+    
 </body>
 </html>
