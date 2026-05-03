@@ -135,17 +135,16 @@
                 <label for="editor-upload" class="action-btn" style="cursor:pointer;">📁 Open PDF to Edit</label>
             </div>
 
-            <!-- Full-Screen Editor Modal (Updated for Multi-Page) -->
+            <!-- Full-Screen Editor Modal -->
             <div id="editor-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.9); z-index:9999; overflow-y:auto; padding:10px;">
                 <div class="editor-content-container" style="background:white; max-width:1200px; margin:auto; border-radius:12px; overflow:hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); display: flex; flex-direction: column; height: 95vh;">
                     
-                    <!-- Editor Toolbar -->
-                    <div class="editor-header" style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:12px 20px; border-bottom:1px solid #cbd5e1;">
+                    <!-- Editor Toolbar (Undo Removed) -->
+                    <div class="editor-header" style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:12px 25px; border-bottom:1px solid #cbd5e1;">
                         <div style="display: flex; gap: 8px;">
                             <button class="tool-btn active" id="btn-select" onclick="setTool('select')">🖱️ Select</button>
                             <button class="tool-btn" id="btn-text" onclick="setTool('text')">⌨️ Add Text</button>
                             <button class="tool-btn" id="btn-draw" onclick="setTool('draw')">🖋️ Sign</button>
-                            <button class="tool-btn" onclick="undo()">↩️ Undo</button>
                             <button class="tool-btn" onclick="deleteObject()" style="color:#e11d48; font-weight:bold;">🗑️ Delete</button>
                         </div>
                         <div style="display: flex; align-items: center;">
@@ -154,9 +153,9 @@
                         </div>
                     </div>
 
-                    <!-- Multi-Page Canvas Workspace -->
+                    <!-- Multi-Page Workspace Fix: Centered and full width -->
                     <div id="canvas-wrapper" style="flex-grow: 1; background:#475569; padding:20px; overflow-y:scroll; display:flex; flex-direction:column; align-items:center;">
-                        <div id="canvas-container">
+                        <div id="canvas-container" style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 20px;">
                             <!-- JS will inject dynamic page wrappers/canvases here -->
                         </div>
                     </div>
