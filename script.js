@@ -517,3 +517,48 @@ async function saveEditedPdf() {
     const pdfBytes = await pdfDoc.save();
     downloadBlob(pdfBytes, 'filled_form_76.pdf', 'application/pdf');
 }
+async function openEditor(event) {
+    console.log("File selected..."); // Diagnostic 1
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const modal = document.getElementById('editor-modal');
+    modal.style.display = 'block'; 
+    console.log("Modal display set to block"); // Diagnostic 2
+
+    try {
+        originalPdfBytes = await file.arrayBuffer();
+        
+        // Initialize PDF.js
+        const loadingTask = pdfjsLib.getDocument({data: originalPdfBytes});
+        const pdf = await loadingTask.promise;
+        const page = await pdf.getPage(1);
+        
+        const viewport = page.getViewport({ scale: 1.5 });
+        const tempCanvas = document.createElement('canvas');
+        const context = tempCanvas.getContext('2d');
+        tempCanvas.height = viewport.height;
+        tempCanvas.width = viewport.width;
+
+        console.log("Rendering PDF page..."); // Diagnostic 3
+        await page.render({ canvasContext: context, viewport: viewport }).promise;
+        const bgImageData = tempCanvas.toDataURL('image/png');
+
+        // Setup Fabric
+        if (fabricCanvas) fabricCanvas.dispose(); // Clear old session
+        
+        fabricCanvas = new fabric.Canvas('main-editor-canvas', {
+            width: viewport.width,
+            height: viewport.height
+        });
+
+        fabric.Image.fromURL(bgImageData, function(img) {
+            fabricCanvas.setBackgroundImage(img, fabricCanvas.renderAll.bind(fabricCanvas));
+            console.log("Editor ready!"); // Diagnostic 4
+        });
+
+    } catch (error) {
+        console.error("Editor Error:", error);
+        alert("Could not open PDF. Check console for details.");
+    }
+}
