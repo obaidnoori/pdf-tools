@@ -24,28 +24,37 @@
 
     <main>
 
-        <section id="sign-fill" class="tool-box">
-    <h2>Sign & Fill</h2>
-    <p>Click to type text or draw your signature directly on the PDF.</p>
+<section id="pdf-editor-section" class="tool-box">
+    <h2>Full PDF Editor</h2>
+    <p>Professional form-filling and signature suite.</p>
     
-    <div class="toolbar" style="margin-bottom: 15px;">
-        <button class="tool-btn" onclick="setSignMode('text')">⌨️ Text Mode</button>
-        <button class="tool-btn" onclick="setSignMode('draw')">🖋️ Sign Mode</button>
-        <button class="tool-btn" style="background:#ef4444; color:white;" onclick="clearSignatures()">Reset</button>
-    </div>
-
     <div class="upload-area">
-        <input type="file" id="sign-input" accept=".pdf" onchange="loadPdfForSigning(event)">
+        <input type="file" id="editor-upload" accept=".pdf" onchange="openEditor(event)">
+        <label for="editor-upload" class="action-btn">📁 Open PDF to Edit</label>
     </div>
 
-    <div id="pdf-wrapper" style="position: relative; display: inline-block; margin-top: 20px; border: 2px solid #ddd; background: #fff; overflow: hidden;">
-        <canvas id="pdf-canvas"></canvas>
-        <canvas id="sign-canvas" style="position: absolute; top: 0; left: 0; cursor: crosshair;"></canvas>
+    <!-- The Full-Screen Modal -->
+    <div id="editor-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; overflow-y:auto; padding:20px;">
+        <div style="background:white; max-width:1000px; margin:auto; border-radius:8px; padding:20px;">
+            <div class="editor-header" style="display:flex; justify-content:space-between; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                <div>
+                    <button class="tool-btn active" id="btn-text" onclick="setTool('text')">⌨️ Add Text</button>
+                    <button class="tool-btn" id="btn-draw" onclick="setTool('draw')">🖋️ Sign</button>
+                    <button class="tool-btn" onclick="deleteObject()" style="color:red;">🗑️ Delete</button>
+                </div>
+                <div>
+                    <button class="action-btn" onclick="saveEditedPdf()" style="padding:5px 15px;">💾 Burn & Download</button>
+                    <button onclick="closeEditor()" style="background:none; border:none; font-size:24px; cursor:pointer;">&times;</button>
+                </div>
+            </div>
+            
+            <div id="canvas-wrapper" style="display:flex; justify-content:center; background:#525659; padding:20px; border-radius:4px;">
+                <!-- Fabric.js handles the interaction -->
+                <canvas id="main-editor-canvas"></canvas>
+            </div>
+        </div>
     </div>
-
-    <div style="margin-top: 20px;">
-        <button class="action-btn" onclick="saveSignedPdf()">Burn & Download PDF</button>
-    </div>
+</section>
 </section>
         
         <!-- Hero / Privacy Section -->
