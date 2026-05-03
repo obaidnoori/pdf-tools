@@ -89,5 +89,13 @@ nav a {
     margin-top: 10px;
 }
 
+input[type="password"] {
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    width: 80%;
+    max-width: 300px;
+}
+
 .input-group { margin: 20px 0; }
 .status-text { margin-top: 15px; color: #64748b; font-size: 0.9rem; }
