@@ -1,18 +1,27 @@
+/* --- VARIABLES --- */
 :root {
     --primary: #2563eb;
+    --primary-hover: #1d4ed8;
     --accent: #FFDD00;
+    --accent-hover: #e6c700;
     --dark: #1e293b;
     --light: #f8fafc;
+    --border: #cbd5e1;
+    --text-muted: #64748b;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
+/* --- BASE STYLES --- */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     margin: 0;
     background-color: var(--light);
     color: var(--dark);
+    line-height: 1.5;
     scroll-behavior: smooth;
 }
 
+/* --- HEADER & NAVIGATION --- */
 .sticky-header {
     position: sticky;
     top: 0;
@@ -20,48 +29,124 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 5%;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 0.75rem 5%;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     z-index: 1000;
 }
 
-.logo { font-size: 1.5rem; color: var(--primary); }
+.logo { 
+    font-size: 1.5rem; 
+    color: var(--primary); 
+    font-weight: 700;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
 
 nav a {
-    margin-left: 20px;
     text-decoration: none;
     color: var(--dark);
     font-weight: 500;
+    font-size: 0.95rem;
+    transition: color 0.2s;
+}
+
+nav a:hover {
+    color: var(--primary);
 }
 
 .bmac-btn {
     background: var(--accent);
     padding: 8px 16px;
     border-radius: 6px;
-    transition: 0.3s;
+    font-weight: 600;
+    transition: background 0.2s, transform 0.1s;
 }
 
+.bmac-btn:hover {
+    background: var(--accent-hover);
+    transform: translateY(-1px);
+}
+
+/* --- HERO SECTION --- */
 #hero {
     text-align: center;
-    padding: 80px 20px;
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    padding: 60px 20px;
+    background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);
     color: white;
 }
 
-.dba-tag { font-style: italic; opacity: 0.8; }
+#hero h1 { margin-bottom: 10px; font-size: 2.5rem; }
+#hero p { font-size: 1.1rem; opacity: 0.9; }
 
+.dba-tag { 
+    font-style: italic; 
+    opacity: 0.7; 
+    font-size: 0.85rem; 
+    margin-top: 15px; 
+}
+
+/* --- TOOL CONTAINERS --- */
 .tool-box {
-    max-width: 700px;
+    max-width: 750px;
     margin: 40px auto;
-    padding: 40px;
+    padding: 30px;
     background: white;
     border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow);
     text-align: center;
 }
 
-/* File List Styles */
-#file-list {
+.tool-box h2 { margin-top: 0; color: var(--dark); }
+
+.upload-area {
+    border: 2px dashed var(--border);
+    padding: 30px;
+    border-radius: 8px;
+    margin: 20px 0;
+    transition: border-color 0.2s;
+}
+
+.upload-area:hover { border-color: var(--primary); }
+
+/* --- INPUTS & BUTTONS --- */
+.action-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 28px;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.action-btn:hover { background: var(--primary-hover); }
+
+input[type="password"], 
+input[type="text"], 
+input[type="number"] {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 1rem;
+    outline-color: var(--primary);
+}
+
+.input-group { 
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0; 
+}
+
+/* --- FILE & PAGE LISTS --- */
+#file-list, .sortable-list {
     list-style: none;
     padding: 0;
     margin: 20px 0;
@@ -70,87 +155,29 @@ nav a {
 .file-item {
     background: #f1f5f9;
     margin: 8px 0;
-    padding: 12px;
-    border-radius: 6px;
+    padding: 12px 16px;
+    border-radius: 8px;
     display: flex;
     justify-content: space-between;
+    align-items: center;
     cursor: grab;
     border: 1px solid #e2e8f0;
+    transition: background 0.2s;
 }
 
-.action-btn {
-    background: var(--primary);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    font-size: 1rem;
-    border-radius: 6px;
-    cursor: pointer;
-    margin-top: 10px;
-}
+.file-item:hover { background: #e2e8f0; }
 
-input[type="password"] {
-    padding: 10px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    width: 80%;
-    max-width: 300px;
-}
+.sortable-ghost { opacity: 0.4; background: var(--primary); }
 
-.sortable-list {
-    max-width: 500px;
-    margin: 20px auto;
-    padding: 0;
-}
-
-#page-list button {
-    background: #e2e8f0;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    transition: transform 0.2s;
-}
-
-.input-group input[type="number"] {
-    padding: 10px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-}
-
-.tool-btn {
-    padding: 8px 15px;
-    border: 1px solid #cbd5e1;
-    background: white;
-    cursor: pointer;
-    border-radius: 4px;
-    margin: 0 5px;
-}
-
-.tool-btn.active {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
-}
-
-#pdf-wrapper canvas {
-    max-width: 100%;
-    height: auto !important;
-}
-
-.input-group { margin: 20px 0; }
-.status-text { margin-top: 15px; color: #64748b; font-size: 0.9rem; }
-
-/* Add this to your style.css */
+/* --- EDITOR MODAL --- */
 #editor-modal {
-    display: none; /* Controlled by JS */
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(30, 41, 59, 0.95); /* Darker backdrop */
+    background: rgba(15, 23, 42, 0.9);
     z-index: 9999;
     padding: 20px;
     box-sizing: border-box;
@@ -165,14 +192,57 @@ input[type="password"] {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.editor-header {
+    background: #f8fafc;
+    padding: 15px 25px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 #canvas-wrapper {
     flex-grow: 1;
     overflow: auto;
-    background: #525659;
+    background: #475569;
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    padding: 20px;
+    padding: 40px;
+}
+
+.tool-btn {
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    background: white;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.tool-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* --- FOOTER --- */
+footer {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 60px;
+}
+
+.status-text { 
+    margin-top: 15px; 
+    color: var(--text-muted); 
+    font-size: 0.9rem; 
+    font-weight: 500;
 }
