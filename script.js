@@ -167,3 +167,116 @@ async function lockPdf() {
 
     downloadBlob(encryptedBytes, 'protected_76supplier.pdf', 'application/pdf');
 }
+
+
+let orgPdfDoc = null;
+let pageRotations = {}; // Keeps track of [pageIndex]: degrees
+
+// --- ORGANIZE & ROTATE ---
+async function loadPagesForOrg(event) {
+    const file = event.target.files[0];
+    const list = document.getElementById('page-list');
+    list.innerHTML = ""; 
+    pageRotations = {};
+
+    const { PDFDocument } = PDFLib;
+    const bytes = await file.arrayBuffer();
+    orgPdfDoc = await PDFDocument.load(bytes);
+    const pageCount = orgPdfDoc.getPageCount();
+
+    for (let i = 0; i < pageCount; i++) {
+        const li = document.createElement('li');
+        li.className = 'file-item';
+        li.setAttribute('data-index', i);
+        li.innerHTML = `
+            <span>Page ${i + 1}</span>
+            <div>
+                <button onclick="rotatePage(this, ${i})">🔄 Rotate</button>
+                <button onclick="this.parentElement.parentElement.remove()" style="color:red">🗑️</button>
+                <span style="cursor:grab; margin-left:10px;">⠿</span>
+            </div>
+        `;
+        list.appendChild(li);
+    }
+    Sortable.create(list, { animation: 150 });
+}
+
+function rotatePage(btn, index) {
+    pageRotations[index] = (pageRotations[index] || 0) + 90;
+    btn.style.transform = `rotate(${pageRotations[index]}deg)`;
+}
+
+async function exportOrganizedPdf() {
+    const listItems = document.querySelectorAll('#page-list li');
+    const { PDFDocument, degrees } = PDFLib;
+    const newPdf = await PDFDocument.create();
+
+    for (const li of listItems) {
+        const oldIndex = parseInt(li.getAttribute('data-index'));
+        const [copiedPage] = await newPdf.copyPages(orgPdfDoc, [oldIndex]);
+        
+        // Apply rotation if any
+        if (pageRotations[oldIndex]) {
+            copiedPage.setRotation(degrees(pageRotations[oldIndex] % 360));
+        }
+        newPdf.addPage(copiedPage);
+    }
+
+    const bytes = await newPdf.save();
+    downloadBlob(bytes, "organized_76supplier.pdf", "application/pdf");
+}
+
+// --- WATERMARK ---
+async function applyWatermark() {
+    const input = document.getElementById('watermark-input');
+    const text = document.getElementById('watermark-text').value;
+    const opacity = parseFloat(document.getElementById('watermark-opacity').value);
+    if (!input.files[0] || !text) return alert("Select file and enter text");
+
+    const { PDFDocument, rgb, degrees, StandardFonts } = PDFLib;
+    const bytes = await input.files[0].arrayBuffer();
+    const pdfDoc = await PDFDocument.load(bytes);
+    const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    
+    const pages = pdfDoc.getPages();
+    pages.forEach(page => {
+        const { width, height } = page.getSize();
+        page.drawText(text, {
+            x: width / 4,
+            y: height / 2,
+            size: 50,
+            font: font,
+            color: rgb(0.5, 0.5, 0.5),
+            opacity: opacity,
+            rotate: degrees(45),
+        });
+    });
+
+    const pdfBytes = await pdfDoc.save();
+    downloadBlob(pdfBytes, "watermarked_76supplier.pdf", "application/pdf");
+}
+
+// --- METADATA EDITOR ---
+async function loadMetadata(event) {
+    const file = event.target.files[0];
+    const { PDFDocument } = PDFLib;
+    const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
+    document.getElementById('meta-title').value = pdfDoc.getTitle() || "";
+    document.getElementById('meta-author').value = pdfDoc.getAuthor() || "";
+}
+
+async function saveMetadata() {
+    const input = document.getElementById('meta-input');
+    const title = document.getElementById('meta-title').value;
+    const author = document.getElementById('meta-author').value;
+
+    const { PDFDocument } = PDFLib;
+    const pdfDoc = await PDFDocument.load(await input.files[0].arrayBuffer());
+    
+    pdfDoc.setTitle(title);
+    pdfDoc.setAuthor(author);
+    pdfDoc.setProducer("76 PDF Suite");
+
+    const bytes = await pdfDoc.save();
+    downloadBlob(bytes, "updated_meta_76supplier.pdf", "application/pdf");
+}
