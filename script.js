@@ -280,3 +280,142 @@ async function saveMetadata() {
     const bytes = await pdfDoc.save();
     downloadBlob(bytes, "updated_meta_76supplier.pdf", "application/pdf");
 }
+
+let signMode = 'text';
+let isDrawing = false;
+let signElements = []; // Stores text and drawing strokes
+let currentPdf = null;
+let pdfScale = 1.5;
+
+const signCanvas = document.getElementById('sign-canvas');
+const ctx = signCanvas.getContext('2d');
+
+function setSignMode(mode) {
+    signMode = mode;
+    document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+}
+
+async function loadPdfForSigning(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const arrayBuffer = await file.arrayBuffer();
+    currentPdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+    renderSignPage(1);
+}
+
+async function renderSignPage(num) {
+    const page = await currentPdf.getPage(num);
+    const viewport = page.getViewport({ scale: pdfScale });
+    const canvas = document.getElementById('pdf-canvas');
+    const context = canvas.getContext('2d');
+
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+    signCanvas.height = viewport.height;
+    signCanvas.width = viewport.width;
+
+    await page.render({ canvasContext: context, viewport: viewport }).promise;
+}
+
+// Handle Mouse/Touch Interaction
+signCanvas.addEventListener('mousedown', startAction);
+signCanvas.addEventListener('mousemove', doAction);
+signCanvas.addEventListener('mouseup', stopAction);
+
+function startAction(e) {
+    const rect = signCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (signMode === 'text') {
+        const text = prompt("Enter text:");
+        if (text) {
+            signElements.push({ type: 'text', x, y, content: text });
+            drawAllElements();
+        }
+    } else {
+        isDrawing = true;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        signElements.push({ type: 'draw', points: [{x, y}] });
+    }
+}
+
+function doAction(e) {
+    if (!isDrawing || signMode !== 'draw') return;
+    const rect = signCanvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    signElements[signElements.length - 1].points.push({x, y});
+}
+
+function stopAction() { isDrawing = false; }
+
+function drawAllElements() {
+    ctx.clearRect(0, 0, signCanvas.width, signCanvas.height);
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+    ctx.font = "20px Arial";
+
+    signElements.forEach(el => {
+        if (el.type === 'text') {
+            ctx.fillText(el.content, el.x, el.y);
+        } else if (el.type === 'draw') {
+            ctx.beginPath();
+            el.points.forEach((p, i) => {
+                if (i === 0) ctx.moveTo(p.x, p.y);
+                else ctx.lineTo(p.x, p.y);
+            });
+            ctx.stroke();
+        }
+    });
+}
+
+function clearSignatures() {
+    signElements = [];
+    ctx.clearRect(0, 0, signCanvas.width, signCanvas.height);
+}
+
+// Final Step: "Burn" elements into the real PDF
+async function saveSignedPdf() {
+    const input = document.getElementById('sign-input');
+    const { PDFDocument, rgb, StandardFonts } = PDFLib;
+    const bytes = await input.files[0].arrayBuffer();
+    const pdfDoc = await PDFDocument.load(bytes);
+    const pages = pdfDoc.getPages();
+    const firstPage = pages[0];
+    const { width, height } = firstPage.getSize();
+
+    // Calculate scale factor between canvas and PDF
+    const scaleX = width / signCanvas.width;
+    const scaleY = height / signCanvas.height;
+
+    for (const el of signElements) {
+        if (el.type === 'text') {
+            firstPage.drawText(el.content, {
+                x: el.x * scaleX,
+                y: height - (el.y * scaleY), // Flip coordinates for PDF
+                size: 20,
+                color: rgb(0, 0, 0),
+            });
+        } else if (el.type === 'draw') {
+            // Draw lines for signature
+            for (let i = 0; i < el.points.length - 1; i++) {
+                firstPage.drawLine({
+                    start: { x: el.points[i].x * scaleX, y: height - (el.points[i].y * scaleY) },
+                    end: { x: el.points[i+1].x * scaleX, y: height - (el.points[i+1].y * scaleY) },
+                    thickness: 2,
+                    color: rgb(0, 0, 0),
+                });
+            }
+        }
+    }
+
+    const pdfBytes = await pdfDoc.save();
+    downloadBlob(pdfBytes, 'signed_76supplier.pdf', 'application/pdf');
+}
