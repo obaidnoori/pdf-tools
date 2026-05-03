@@ -1,29 +1,93 @@
-body { font-family: sans-serif; margin: 0; line-height: 1.6; }
+:root {
+    --primary: #2563eb;
+    --accent: #FFDD00;
+    --dark: #1e293b;
+    --light: #f8fafc;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background-color: var(--light);
+    color: var(--dark);
+    scroll-behavior: smooth;
+}
 
 .sticky-header {
     position: sticky;
     top: 0;
-    background: #ffffff;
+    background: white;
     display: flex;
     justify-content: space-between;
+    align-items: center;
     padding: 1rem 5%;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     z-index: 1000;
 }
 
-.bmac-btn {
-    background: #FFDD00;
-    color: #000000;
-    padding: 8px 15px;
-    border-radius: 5px;
+.logo { font-size: 1.5rem; color: var(--primary); }
+
+nav a {
+    margin-left: 20px;
     text-decoration: none;
-    font-weight: bold;
+    color: var(--dark);
+    font-weight: 500;
 }
 
+.bmac-btn {
+    background: var(--accent);
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: 0.3s;
+}
+
+#hero {
+    text-align: center;
+    padding: 80px 20px;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    color: white;
+}
+
+.dba-tag { font-style: italic; opacity: 0.8; }
+
 .tool-box {
-    padding: 100px 5%;
-    border-bottom: 1px solid #eee;
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 40px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     text-align: center;
 }
 
-#hero { height: 60vh; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #f9f9f9; }
+/* File List Styles */
+#file-list {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+}
+
+.file-item {
+    background: #f1f5f9;
+    margin: 8px 0;
+    padding: 12px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    cursor: grab;
+    border: 1px solid #e2e8f0;
+}
+
+.action-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    font-size: 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.input-group { margin: 20px 0; }
+.status-text { margin-top: 15px; color: #64748b; font-size: 0.9rem; }
