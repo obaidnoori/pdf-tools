@@ -102,51 +102,27 @@ function setTool(tool) {
 }
 
 async function saveEditedPdf() {
-    try {
-        const { PDFDocument, rgb } = PDFLib;
-        const pdfDoc = await PDFDocument.load(originalPdfArrayBuffer.slice(0));
-        const pages = pdfDoc.getPages();
+    const { PDFDocument } = PDFLib;
+    const existingPdfBytes = await currentPdfFile.arrayBuffer();
+    const pdfDoc = await PDFDocument.load(existingPdfBytes);
+    const pages = pdfDoc.getPages();
 
-        // Process every page's canvas
-        for (let i = 0; i < fabricCanvases.length; i++) {
-            const fCanvas = fabricCanvases[i];
-            const pdfPage = pages[i];
-            const { width, height } = pdfPage.getSize();
+    // Iterate through all canvases created for each page
+    for (let i = 0; i < pages.length; i++) {
+        const fabricCanvas = allCanvases[i]; // Array where you stored each page's fabric instance
+        if (!fabricCanvas) continue;
 
-            const scaleX = width / fCanvas.width;
-            const scaleY = height / fCanvas.height;
-
-            const objects = fCanvas.getObjects();
-            for (const obj of objects) {
-                if (obj.type === 'i-text' || obj.type === 'text') {
-                    pdfPage.drawText(obj.text, {
-                        x: obj.left * scaleX,
-                        // Fix coordinate flip: PDF y starts at bottom
-                        y: height - (obj.top * scaleY) - (obj.fontSize * scaleY),
-                        size: obj.fontSize * scaleY,
-                        color: rgb(0, 0, 0)
-                    });
-                } else if (obj.type === 'path') {
-                    // Convert drawing paths back to PDF
-                    pdfPage.drawSvgPath(obj.pathData, {
-                        x: obj.left * scaleX,
-                        y: height - (obj.top * scaleY),
-                        scale: scaleX,
-                        borderColor: rgb(0, 0, 0),
-                    });
-                }
-            }
-        }
-
-        const pdfBytes = await pdfDoc.save();
-        downloadBlob(pdfBytes, originalFileName, 'application/pdf');
-    } catch (err) {
-        console.error("Save Error:", err);
+        const dataUrl = fabricCanvas.toDataURL({ format: 'png', multiplier: 2 });
+        const image = await pdfDoc.embedPng(dataUrl);
+        const { width, height } = pages[i].getSize();
+        
+        pages[i].drawImage(image, { x: 0, y: 0, width, height });
     }
-}
 
-function closeEditor() {
-    document.getElementById('editor-modal').style.display = 'none';
-    fabricCanvases.forEach(c => c.dispose());
-    fabricCanvases = [];
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: "application/pdf" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "edited_76supplier.pdf";
+    link.click();
 }
