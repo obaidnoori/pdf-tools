@@ -97,5 +97,27 @@ input[type="password"] {
     max-width: 300px;
 }
 
+.sortable-list {
+    max-width: 500px;
+    margin: 20px auto;
+    padding: 0;
+}
+
+#page-list button {
+    background: #e2e8f0;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: transform 0.2s;
+}
+
+.input-group input[type="number"] {
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+}
+
 .input-group { margin: 20px 0; }
 .status-text { margin-top: 15px; color: #64748b; font-size: 0.9rem; }
