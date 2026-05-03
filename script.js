@@ -1,14 +1,11 @@
-/**
- * 76 PDF Suite - Comprehensive Logic
- * Powered by 76 Supplier Company
- */
-
-// Initialize PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const { PDFDocument, StandardFonts, rgb } = PDFLib;
 
-const { PDFDocument, StandardFonts, rgb, degrees } = PDFLib;
+function getSafeName(file, suffix) {
+    const name = file.name.replace(/\.[^/.]+$/, "");
+    return `${name}_${suffix}.pdf`;
+}
 
-/** --- UTILS --- */
 function downloadBlob(data, name, type) {
     const blob = new Blob([data], { type: type });
     const url = window.URL.createObjectURL(blob);
@@ -18,330 +15,178 @@ function downloadBlob(data, name, type) {
     a.click();
 }
 
-/** --- MERGE TOOL --- */
+/** MERGE */
 let mergeFilesArray = [];
-
 function handleMergeFiles(e) {
     mergeFilesArray = Array.from(e.target.files);
     const list = document.getElementById('file-list');
     list.innerHTML = '';
-    
-    // Create list items with data-index to track original file
-    mergeFilesArray.forEach((f, index) => {
+    mergeFilesArray.forEach((f, i) => {
         const li = document.createElement('li');
         li.textContent = f.name;
-        li.dataset.index = index;
+        li.dataset.index = i;
         li.className = "sortable-item";
         list.appendChild(li);
     });
-
-    // Initialize Sortable
     new Sortable(list, { animation: 150 });
 }
 
 async function generateMergedPdf() {
-    if (mergeFilesArray.length < 2) return alert("Select at least 2 files.");
-    
-    // Read the new order from the DOM
+    if (mergeFilesArray.length < 2) return;
     const listItems = document.querySelectorAll('#file-list li');
     const sortedFiles = Array.from(listItems).map(li => mergeFilesArray[li.dataset.index]);
-
-    const mergedPdf = await PDFDocument.create();
-    
-    for (const file of sortedFiles) {
-        const bytes = await file.arrayBuffer();
-        const doc = await PDFDocument.load(bytes);
-        const pages = await mergedPdf.copyPages(doc, doc.getPageIndices());
-        pages.forEach(p => mergedPdf.addPage(p));
+    const mergedDoc = await PDFDocument.create();
+    for (const f of sortedFiles) {
+        const doc = await PDFDocument.load(await f.arrayBuffer());
+        const pages = await mergedDoc.copyPages(doc, doc.getPageIndices());
+        pages.forEach(p => mergedDoc.addPage(p));
     }
-    
-    const bytes = await mergedPdf.save();
-    downloadBlob(bytes, "merged_76supplier.pdf", "application/pdf");
+    downloadBlob(await mergedDoc.save(), "merged_files.pdf", "application/pdf");
 }
 
-/** --- BATCH SPLITTER --- */
+/** SPLIT */
 async function generateBatchSplit() {
-    const input = document.getElementById('split-input').files[0];
+    const file = document.getElementById('split-input').files[0];
     const interval = parseInt(document.getElementById('split-interval').value);
-    if (!input || !interval) return alert("Select file and valid interval.");
-
-    const originalName = input.name.replace(/\.[^/.]+$/, "");
+    if (!file) return;
     const zip = new JSZip();
-    const sourceBytes = await input.arrayBuffer();
-    const sourceDoc = await PDFDocument.load(sourceBytes);
-    const totalPages = sourceDoc.getPageCount();
-
-    for (let i = 0; i < totalPages; i += interval) {
+    const sourceDoc = await PDFDocument.load(await file.arrayBuffer());
+    for (let i = 0; i < sourceDoc.getPageCount(); i += interval) {
         const newDoc = await PDFDocument.create();
-        const end = Math.min(i + interval, totalPages);
-        const indices = Array.from({length: end - i}, (_, k) => i + k);
-        const pages = await newDoc.copyPages(sourceDoc, indices);
+        const pages = await newDoc.copyPages(sourceDoc, Array.from({length: Math.min(interval, sourceDoc.getPageCount()-i)}, (_, k) => i + k));
         pages.forEach(p => newDoc.addPage(p));
-        const partBytes = await newDoc.save();
-        zip.file(`${originalName}_part_${Math.floor(i/interval) + 1}.pdf`, partBytes);
+        zip.file(`${file.name.split('.')[0]}_part_${(i/interval)+1}.pdf`, await newDoc.save());
     }
-
     const content = await zip.generateAsync({type:"blob"});
-    downloadBlob(content, `${originalName}_split_files.zip`, "application/zip");
+    downloadBlob(content, `${file.name.split('.')[0]}_split_files.zip`, "application/zip");
 }
 
-/** --- IMAGE TO PDF --- */
+/** IMAGE TO PDF */
 async function generateImgToPdf() {
     const files = document.getElementById('img-input').files;
-    if (files.length === 0) return alert("Please select images.");
-
+    if (!files.length) return;
     const pdfDoc = await PDFDocument.create();
-
-    for (let file of files) {
-        const bytes = await file.arrayBuffer();
-        let image;
-        if (file.type === 'image/jpeg') image = await pdfDoc.embedJpg(bytes);
-        else if (file.type === 'image/png') image = await pdfDoc.embedPng(bytes);
-        else continue; // Skip unsupported formats
-
-        const page = pdfDoc.addPage([image.width, image.height]);
-        page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
+    for (let f of files) {
+        const bytes = await f.arrayBuffer();
+        const img = f.type === 'image/jpeg' ? await pdfDoc.embedJpg(bytes) : await pdfDoc.embedPng(bytes);
+        const page = pdfDoc.addPage([img.width, img.height]);
+        page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
     }
-
-    const pdfBytes = await pdfDoc.save();
-    downloadBlob(pdfBytes, "images_converted_76.pdf", "application/pdf");
+    downloadBlob(await pdfDoc.save(), "images_to_pdf.pdf", "application/pdf");
 }
 
-/** --- WATERMARK TOOL --- */
+/** WATERMARK */
 async function applyWatermark() {
     const file = document.getElementById('watermark-input').files[0];
-    let text = document.getElementById('watermark-text').value;
-    const opacity = parseFloat(document.getElementById('watermark-opacity').value);
-    if (!file || !text) return alert("File and text required.");
-
-    // Force uppercase
-    text = text.toUpperCase();
-
-    const bytes = await file.arrayBuffer();
-    const pdfDoc = await PDFDocument.load(bytes);
+    const text = document.getElementById('watermark-text').value.toUpperCase();
+    if (!file || !text) return;
+    const pdfDoc = await PDFDocument.load(await file.arrayBuffer());
     const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-    const pages = pdfDoc.getPages();
-    const fontSize = 60;
-
-    // Calculate approximate text width
-    const textWidth = font.widthOfTextAtSize(text, fontSize);
-    const textHeight = font.heightAtSize(fontSize);
-
-    pages.forEach(page => {
+    pdfDoc.getPages().forEach(page => {
         const { width, height } = page.getSize();
-        // Calculate center point
-        const centerX = width / 2;
-        const centerY = height / 2;
-
         page.drawText(text, {
-            x: centerX - (textWidth / 2),
-            y: centerY - (textHeight / 2),
-            size: fontSize,
-            font: font,
-            color: rgb(0.6, 0.6, 0.6),
-            opacity: opacity,
+            x: (width / 2) - (font.widthOfTextAtSize(text, 60) / 2),
+            y: (height / 2) - 30,
+            size: 60, font: font, opacity: parseFloat(document.getElementById('watermark-opacity').value)
         });
     });
-
-    const outBytes = await pdfDoc.save();
-    downloadBlob(outBytes, "watermarked_76.pdf", "application/pdf");
+    downloadBlob(await pdfDoc.save(), getSafeName(file, "watermarked"), "application/pdf");
 }
 
-/** --- METADATA EDITOR --- */
-let activeMetaDoc = null;
+/** METADATA FIX */
+let activeMetaFile = null;
 async function loadMetadata(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const bytes = await file.arrayBuffer();
-    activeMetaDoc = await PDFDocument.load(bytes);
-    
-    document.getElementById('meta-title').value = activeMetaDoc.getTitle() || '';
-    document.getElementById('meta-author').value = activeMetaDoc.getAuthor() || '';
+    activeMetaFile = e.target.files[0];
+    if (!activeMetaFile) return;
+    const doc = await PDFDocument.load(await activeMetaFile.arrayBuffer());
+    document.getElementById('meta-title').value = doc.getTitle() || '';
+    document.getElementById('meta-author').value = doc.getAuthor() || '';
 }
 
 async function saveMetadata() {
-    if (!activeMetaDoc) return alert("Please load a PDF first.");
-    activeMetaDoc.setTitle(document.getElementById('meta-title').value);
-    activeMetaDoc.setAuthor(document.getElementById('meta-author').value);
-    
-    const bytes = await activeMetaDoc.save();
-    downloadBlob(bytes, "metadata_updated_76.pdf", "application/pdf");
+    if (!activeMetaFile) return;
+    const doc = await PDFDocument.load(await activeMetaFile.arrayBuffer());
+    doc.setTitle(document.getElementById('meta-title').value);
+    doc.setAuthor(document.getElementById('meta-author').value);
+    downloadBlob(await doc.save(), getSafeName(activeMetaFile, "metadata_update"), "application/pdf");
 }
 
-/** --- FULL PDF EDITOR & ORGANIZER --- */
-let currentPdfFile = null;
-let originalFileName = "document";
-let allCanvases = {}; // Dictionary to track original page index to Fabric canvas
-let originalPdfDoc = null; // Store original loaded PDF
+/** FULL EDITOR */
+let currentEditorFile = null;
+let editorPdfDoc = null;
+let allCanvases = {};
 
 async function openEditor(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    currentPdfFile = file;
-    originalFileName = file.name.replace(/\.[^/.]+$/, "");
-    
+    currentEditorFile = event.target.files[0];
+    if (!currentEditorFile) return;
     const modal = document.getElementById('editor-modal');
     const container = document.getElementById('canvas-container');
-    
     modal.style.display = 'block';
-    container.innerHTML = '<p style="color:white; margin-top: 20px;">Loading pages...</p>';
-    allCanvases = {};
-
-    const arrayBuffer = await file.arrayBuffer();
-    originalPdfDoc = await PDFDocument.load(arrayBuffer); // Load via pdf-lib for later burning
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-    container.innerHTML = ''; 
+    container.innerHTML = '';
+    
+    const bytes = await currentEditorFile.arrayBuffer();
+    editorPdfDoc = await PDFDocument.load(bytes);
+    const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
 
     for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const viewport = page.getViewport({ scale: 1.5 });
+        const wrapper = document.createElement('div');
+        wrapper.className = 'page-canvas-wrapper';
+        wrapper.dataset.index = i - 1;
 
-        // Page Wrapper
-        const pageWrapper = document.createElement('div');
-        pageWrapper.className = 'page-canvas-wrapper';
-        pageWrapper.dataset.originalIndex = i - 1; // 0-based for pdf-lib
-
-        // Page Management Controls
         const controls = document.createElement('div');
         controls.className = 'page-controls';
-        controls.innerHTML = `
-            <span style="font-weight:bold;">Page ${i}</span>
-            <button onclick="moveWrapperUp(this)" class="tool-btn">⬆️ Move Up</button>
-            <button onclick="moveWrapperDown(this)" class="tool-btn">⬇️ Move Down</button>
-            <button onclick="deleteWrapper(this)" class="tool-btn" style="color:red;">❌ Delete</button>
-        `;
-        pageWrapper.appendChild(controls);
+        controls.innerHTML = `<span>Page ${i}</span><button onclick="moveUp(this)">⬆️</button><button onclick="moveDown(this)">⬇️</button><button onclick="delPg(this)" style="color:red">❌</button>`;
+        wrapper.appendChild(controls);
 
-        // Canvas
-        const canvasId = `canvas-page-${i}`;
         const canvasEl = document.createElement('canvas');
-        canvasEl.id = canvasId;
-        pageWrapper.appendChild(canvasEl);
-        container.appendChild(pageWrapper);
+        canvasEl.id = `c-${i}`;
+        wrapper.appendChild(canvasEl);
+        container.appendChild(wrapper);
 
-        const fabricCanvas = new fabric.Canvas(canvasId, {
-            width: viewport.width,
-            height: viewport.height
-        });
-
-        const tempCanvas = document.createElement('canvas');
-        const context = tempCanvas.getContext('2d');
-        tempCanvas.width = viewport.width;
-        tempCanvas.height = viewport.height;
-
-        await page.render({ canvasContext: context, viewport: viewport }).promise;
-
-        fabric.Image.fromURL(tempCanvas.toDataURL(), (img) => {
+        const fabricCanvas = new fabric.Canvas(`c-${i}`, { width: viewport.width, height: viewport.height });
+        const tempC = document.createElement('canvas');
+        tempC.width = viewport.width; tempC.height = viewport.height;
+        await page.render({ canvasContext: tempC.getContext('2d'), viewport }).promise;
+        
+        fabric.Image.fromURL(tempC.toDataURL(), (img) => {
             fabricCanvas.setBackgroundImage(img, fabricCanvas.renderAll.bind(fabricCanvas));
         });
-
-        allCanvases[i - 1] = fabricCanvas;
+        allCanvases[i-1] = fabricCanvas;
     }
     setTool('select');
 }
 
-// Editor DOM Management Functions
-function moveWrapperUp(btn) {
-    const wrapper = btn.closest('.page-canvas-wrapper');
-    if (wrapper.previousElementSibling) wrapper.parentNode.insertBefore(wrapper, wrapper.previousElementSibling);
-}
-function moveWrapperDown(btn) {
-    const wrapper = btn.closest('.page-canvas-wrapper');
-    if (wrapper.nextElementSibling) wrapper.parentNode.insertBefore(wrapper.nextElementSibling, wrapper);
-}
-function deleteWrapper(btn) {
-    btn.closest('.page-canvas-wrapper').remove();
-}
-
-function setTool(tool) {
-    document.querySelectorAll('.editor-header .tool-btn').forEach(btn => btn.classList.remove('active'));
-    const btnMap = { 'select': 'btn-select', 'text': 'btn-text', 'draw': 'btn-draw' };
-    if (btnMap[tool]) document.getElementById(btnMap[tool]).classList.add('active');
-
-    Object.values(allCanvases).forEach(canvas => {
-        canvas.isDrawingMode = (tool === 'draw');
-        canvas.selection = (tool === 'select');
-        
-        if (tool === 'text') {
-            canvas.defaultCursor = 'text';
-            canvas.once('mouse:down', (opt) => {
-                const text = new fabric.IText('Type here', {
-                    left: opt.pointer.x,
-                    top: opt.pointer.y,
-                    fontFamily: 'Arial',
-                    fontSize: 20,
-                    fill: '#000'
-                });
-                canvas.add(text);
-                canvas.setActiveObject(text);
+function setTool(t) {
+    Object.values(allCanvases).forEach(c => {
+        c.isDrawingMode = (t === 'draw');
+        c.freeDrawingBrush.width = 4; // Bold Sign
+        if (t === 'text') {
+            c.once('mouse:down', (opt) => {
+                c.add(new fabric.IText('Text', { left: opt.pointer.x, top: opt.pointer.y, fontSize: 20 }));
                 setTool('select');
             });
-        } else {
-            canvas.defaultCursor = 'default';
-        }
-    });
-}
-
-function deleteObject() {
-    Object.values(allCanvases).forEach(canvas => {
-        const activeObjects = canvas.getActiveObjects();
-        if (activeObjects.length) {
-            canvas.remove(...activeObjects);
-            canvas.discardActiveObject();
         }
     });
 }
 
 async function saveEditedPdf() {
-    if (!originalPdfDoc) return;
-
-    try {
-        const finalPdf = await PDFDocument.create();
-        
-        // Get the visual order of wrappers from the DOM
-        const wrappers = document.querySelectorAll('.page-canvas-wrapper');
-        
-        for (let wrapper of wrappers) {
-            const origIndex = parseInt(wrapper.dataset.originalIndex);
-            const fabricCanvas = allCanvases[origIndex];
-
-            // Copy the base page from the original document
-            const [copiedPage] = await finalPdf.copyPages(originalPdfDoc, [origIndex]);
-            finalPdf.addPage(copiedPage);
-
-            // Stamp edits if the canvas exists
-            if (fabricCanvas) {
-                fabricCanvas.discardActiveObject().renderAll();
-                const dataUrl = fabricCanvas.toDataURL({
-                    format: 'png',
-                    multiplier: 2,
-                    enableRetinaScaling: true
-                });
-
-                const overlayImage = await finalPdf.embedPng(dataUrl);
-                const { width, height } = copiedPage.getSize();
-
-                copiedPage.drawImage(overlayImage, {
-                    x: 0,
-                    y: 0,
-                    width: width,
-                    height: height,
-                });
-            }
-        }
-
-        const pdfBytes = await finalPdf.save();
-        downloadBlob(pdfBytes, `${originalFileName}_edit.pdf`, "application/pdf");
-    } catch (err) {
-        console.error("Error burning PDF:", err);
-        alert("Failed to generate PDF. Check console for details.");
+    const finalPdf = await PDFDocument.create();
+    for (let w of document.querySelectorAll('.page-canvas-wrapper')) {
+        const idx = parseInt(w.dataset.index);
+        const [cp] = await finalPdf.copyPages(editorPdfDoc, [idx]);
+        finalPdf.addPage(cp);
+        const fab = allCanvases[idx];
+        fab.discardActiveObject().renderAll();
+        const img = await finalPdf.embedPng(fab.toDataURL({ format: 'png', multiplier: 2 }));
+        finalPdf.getPages()[finalPdf.getPageCount()-1].drawImage(img, { x: 0, y: 0, width: cp.getWidth(), height: cp.getHeight() });
     }
+    downloadBlob(await finalPdf.save(), getSafeName(currentEditorFile, "edit"), "application/pdf");
 }
 
-function closeEditor() {
-    document.getElementById('editor-modal').style.display = 'none';
-    allCanvases = {};
-    document.getElementById('canvas-container').innerHTML = '';
-}
+function moveUp(b) { const w = b.closest('.page-canvas-wrapper'); if (w.previousElementSibling) w.parentNode.insertBefore(w, w.previousElementSibling); }
+function moveDown(b) { const w = b.closest('.page-canvas-wrapper'); if (w.nextElementSibling) w.parentNode.insertBefore(w.nextElementSibling, w); }
+function delPg(b) { b.closest('.page-canvas-wrapper').remove(); }
+function closeEditor() { document.getElementById('editor-modal').style.display = 'none'; }
+function deleteObject() { Object.values(allCanvases).forEach(c => { c.remove(...c.getActiveObjects()); c.discardActiveObject(); }); }
