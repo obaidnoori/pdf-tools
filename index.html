@@ -64,6 +64,43 @@
             <button class="action-btn" onclick="generateBatchSplit()">Split & Download ZIP</button>
             <p id="split-status" class="status-text"></p>
         </section>
+
+        <!-- PDF to Image needs the Mozilla PDF.js library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<!-- Image to PDF Section -->
+<section id="img-to-pdf" class="tool-box">
+    <h2>Image to PDF</h2>
+    <p>Convert JPG/PNG photos into a single PDF document.</p>
+    <div class="upload-area">
+        <input type="file" id="img-input" multiple accept="image/*">
+    </div>
+    <button class="action-btn" onclick="generateImgToPdf()">Convert to PDF</button>
+</section>
+
+<!-- PDF to Image Section -->
+<section id="pdf-to-img" class="tool-box">
+    <h2>PDF to Image</h2>
+    <p>Convert each PDF page into a separate JPEG image.</p>
+    <div class="upload-area">
+        <input type="file" id="pdf-to-img-input" accept=".pdf">
+    </div>
+    <button class="action-btn" onclick="generatePdfToImg()">Convert to Images (ZIP)</button>
+</section>
+
+<!-- Protect PDF Section -->
+<section id="protect" class="tool-box">
+    <h2>Protect PDF</h2>
+    <p>Add a password to lock your PDF file.</p>
+    <div class="upload-area">
+        <input type="file" id="protect-input" accept=".pdf">
+    </div>
+    <div class="input-group">
+        <input type="password" id="pdf-password" placeholder="Enter Password">
+    </div>
+    <button class="action-btn" onclick="lockPdf()">Set Password & Download</button>
+</section>
+        
     </main>
 
     <footer>
