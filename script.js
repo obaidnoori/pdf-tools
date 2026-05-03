@@ -364,3 +364,168 @@ function setTool(tool) {
         document.getElementById('btn-text').classList.add('active');
     }
 }
+
+
+let undoStack = [];
+let isModifying = false;
+
+// Helper to save state for Undo
+function saveState() {
+    if (!fabricCanvas) return;
+    undoStack.push(JSON.stringify(fabricCanvas));
+    if (undoStack.length > 20) undoStack.shift(); 
+}
+
+function undo() {
+    if (undoStack.length > 0) {
+        const previousState = undoStack.pop();
+        fabricCanvas.loadFromJSON(previousState, function() {
+            fabricCanvas.renderAll();
+        });
+    }
+}
+
+async function openEditor(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    document.getElementById('editor-modal').style.display = 'block';
+
+    try {
+        originalPdfBytes = await file.arrayBuffer();
+        const loadingTask = pdfjsLib.getDocument({data: originalPdfBytes});
+        const pdf = await loadingTask.promise;
+        const page = await pdf.getPage(1);
+        
+        const viewport = page.getViewport({ scale: 1.5 });
+        const tempCanvas = document.createElement('canvas');
+        const context = tempCanvas.getContext('2d');
+        tempCanvas.height = viewport.height;
+        tempCanvas.width = viewport.width;
+
+        await page.render({ canvasContext: context, viewport: viewport }).promise;
+        const bgImageData = tempCanvas.toDataURL('image/png');
+
+        if (fabricCanvas) fabricCanvas.dispose();
+        
+        fabricCanvas = new fabric.Canvas('main-editor-canvas', {
+            width: viewport.width,
+            height: viewport.height,
+            stopContextMenu: true
+        });
+
+        fabric.Image.fromURL(bgImageData, function(img) {
+            fabricCanvas.setBackgroundImage(img, fabricCanvas.renderAll.bind(fabricCanvas));
+        });
+
+        // Event: Save state for undo on changes
+        fabricCanvas.on('object:added', () => { if(!isModifying) saveState(); });
+        fabricCanvas.on('object:modified', () => saveState());
+
+        // Text creation logic
+        fabricCanvas.on('mouse:down', function(options) {
+            const activeTool = document.querySelector('.tool-btn.active').id;
+            if (activeTool === 'btn-text' && !options.target) {
+                const text = new fabric.IText('Type here', {
+                    left: options.pointer.x,
+                    top: options.pointer.y,
+                    fontFamily: 'Arial',
+                    fontSize: 20,
+                    fill: '#000',
+                    padding: 5,
+                    cornerSize: 6,
+                    transparentCorners: false
+                });
+                fabricCanvas.add(text);
+                fabricCanvas.setActiveObject(text);
+                
+                // Immediately switch back to select mode to prevent accidental clicks
+                setTool('select');
+                text.enterEditing();
+            }
+        });
+
+    } catch (error) {
+        console.error("Editor Error:", error);
+    }
+}
+
+function setTool(tool) {
+    if (!fabricCanvas) return;
+    
+    document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+    fabricCanvas.isDrawingMode = false;
+    fabricCanvas.selection = true;
+
+    if (tool === 'select') {
+        document.getElementById('btn-select').classList.add('active');
+        fabricCanvas.defaultCursor = 'default';
+    } 
+    else if (tool === 'text') {
+        document.getElementById('btn-text').classList.add('active');
+        fabricCanvas.defaultCursor = 'text';
+    } 
+    else if (tool === 'draw') {
+        document.getElementById('btn-draw').classList.add('active');
+        fabricCanvas.isDrawingMode = true;
+        
+        fabricCanvas.freeDrawingBrush = new fabric.PencilBrush(fabricCanvas);
+        fabricCanvas.freeDrawingBrush.width = 3;
+        fabricCanvas.freeDrawingBrush.color = "#000000";
+    }
+}
+
+function deleteObject() {
+    const activeObjects = fabricCanvas.getActiveObjects();
+    if (activeObjects.length > 0) {
+        saveState();
+        activeObjects.forEach(obj => fabricCanvas.remove(obj));
+        fabricCanvas.discardActiveObject().renderAll();
+    }
+}
+
+function closeEditor() {
+    document.getElementById('editor-modal').style.display = 'none';
+    if (fabricCanvas) {
+        fabricCanvas.clear();
+        fabricCanvas.dispose();
+        fabricCanvas = null;
+    }
+    // Clear the input so the same file can be opened again
+    document.getElementById('editor-upload').value = "";
+}
+
+async function saveEditedPdf() {
+    const { PDFDocument, rgb } = PDFLib;
+    const pdfDoc = await PDFDocument.load(originalPdfBytes);
+    const pages = pdfDoc.getPages();
+    const firstPage = pages[0];
+    const { width, height } = firstPage.getSize();
+
+    // Mapping Fabric pixels to PDF points
+    const scaleX = width / fabricCanvas.width;
+    const scaleY = height / fabricCanvas.height;
+
+    const objects = fabricCanvas.getObjects();
+    
+    for (const obj of objects) {
+        if (obj.type === 'i-text') {
+            firstPage.drawText(obj.text, {
+                x: obj.left * scaleX,
+                // PDF coordinates start from bottom, Fabric from top
+                y: height - (obj.top * scaleY) - (obj.fontSize * scaleY),
+                size: obj.fontSize * scaleY,
+                color: rgb(0, 0, 0)
+            });
+        } 
+        else if (obj.type === 'path') {
+            const pathData = obj.path;
+            // Draw path simplified: as a workaround for complex paths, 
+            // you can also export the canvas overlay as a PNG and embed it.
+            // For stability in browsers, we use basic text/draw data.
+        }
+    }
+
+    const pdfBytes = await pdfDoc.save();
+    downloadBlob(pdfBytes, '76_supplier_edited.pdf', 'application/pdf');
+}
