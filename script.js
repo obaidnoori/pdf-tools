@@ -90,3 +90,80 @@ function downloadBlob(data, fileName, type) {
     a.click();
     window.URL.revokeObjectURL(url);
 }
+
+// --- IMAGE TO PDF ---
+async function generateImgToPdf() {
+    const input = document.getElementById('img-input');
+    if (input.files.length === 0) return alert("Select images first");
+
+    const { PDFDocument } = PDFLib;
+    const pdfDoc = await PDFDocument.create();
+
+    for (const file of input.files) {
+        const imgBytes = await file.arrayBuffer();
+        let image;
+        if (file.type === "image/jpeg" || file.type === "image/jpg") {
+            image = await pdfDoc.embedJpg(imgBytes);
+        } else if (file.type === "image/png") {
+            image = await pdfDoc.embedPng(imgBytes);
+        }
+
+        const page = pdfDoc.addPage([image.width, image.height]);
+        page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
+    }
+
+    const pdfBytes = await pdfDoc.save();
+    downloadBlob(pdfBytes, 'images_to_76pdf.pdf', 'application/pdf');
+}
+
+// --- PDF TO IMAGE (Uses pdf.js) ---
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+async function generatePdfToImg() {
+    const input = document.getElementById('pdf-to-img-input');
+    if (!input.files[0]) return alert("Select a PDF");
+
+    const zip = new JSZip();
+    const arrayBuffer = await input.files[0].arrayBuffer();
+    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+
+    for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const viewport = page.getViewport({ scale: 2 });
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        await page.render({ canvasContext: context, viewport: viewport }).promise;
+        const imgData = canvas.toDataURL('image/jpeg').split(',')[1];
+        zip.file(`page_${i}.jpg`, imgData, { base64: true });
+    }
+
+    const content = await zip.generateAsync({ type: "blob" });
+    downloadBlob(content, 'pdf_pages_76supplier.zip', 'application/zip');
+}
+
+// --- PROTECT PDF ---
+async function lockPdf() {
+    const input = document.getElementById('protect-input');
+    const password = document.getElementById('pdf-password').value;
+    if (!input.files[0] || !password) return alert("Select file and enter password");
+
+    const { PDFDocument } = PDFLib;
+    const bytes = await input.files[0].arrayBuffer();
+    const pdfDoc = await PDFDocument.load(bytes);
+
+    // Encrypt the PDF with the user's password
+    const encryptedBytes = await pdfDoc.save({
+        userPassword: password,
+        ownerPassword: password, // For full control
+        permissions: {
+            printing: 'highResolution',
+            modifying: false,
+            copying: false
+        }
+    });
+
+    downloadBlob(encryptedBytes, 'protected_76supplier.pdf', 'application/pdf');
+}
