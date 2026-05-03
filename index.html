@@ -23,6 +23,31 @@
     </header>
 
     <main>
+
+        <section id="sign-fill" class="tool-box">
+    <h2>Sign & Fill</h2>
+    <p>Click to type text or draw your signature directly on the PDF.</p>
+    
+    <div class="toolbar" style="margin-bottom: 15px;">
+        <button class="tool-btn" onclick="setSignMode('text')">⌨️ Text Mode</button>
+        <button class="tool-btn" onclick="setSignMode('draw')">🖋️ Sign Mode</button>
+        <button class="tool-btn" style="background:#ef4444; color:white;" onclick="clearSignatures()">Reset</button>
+    </div>
+
+    <div class="upload-area">
+        <input type="file" id="sign-input" accept=".pdf" onchange="loadPdfForSigning(event)">
+    </div>
+
+    <div id="pdf-wrapper" style="position: relative; display: inline-block; margin-top: 20px; border: 2px solid #ddd; background: #fff; overflow: hidden;">
+        <canvas id="pdf-canvas"></canvas>
+        <canvas id="sign-canvas" style="position: absolute; top: 0; left: 0; cursor: crosshair;"></canvas>
+    </div>
+
+    <div style="margin-top: 20px;">
+        <button class="action-btn" onclick="saveSignedPdf()">Burn & Download PDF</button>
+    </div>
+</section>
+        
         <!-- Hero / Privacy Section -->
         <section id="hero">
             <h1>Free & Private PDF Tools</h1>
