@@ -419,3 +419,101 @@ async function saveSignedPdf() {
     const pdfBytes = await pdfDoc.save();
     downloadBlob(pdfBytes, 'signed_76supplier.pdf', 'application/pdf');
 }
+
+let fabricCanvas;
+let originalPdfBytes;
+
+async function openEditor(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    document.getElementById('editor-modal').style.display = 'block';
+    originalPdfBytes = await file.arrayBuffer();
+
+    // 1. Render PDF to Image using PDF.js
+    const loadingTask = pdfjsLib.getDocument(originalPdfBytes);
+    const pdf = await loadingTask.promise;
+    const page = await pdf.getPage(1);
+    const viewport = page.getViewport({ scale: 1.5 });
+
+    const tempCanvas = document.createElement('canvas');
+    const context = tempCanvas.getContext('2d');
+    tempCanvas.height = viewport.height;
+    tempCanvas.width = viewport.width;
+
+    await page.render({ canvasContext: context, viewport: viewport }).promise;
+    const bgImageData = tempCanvas.toDataURL('image/png');
+
+    // 2. Initialize Fabric.js
+    fabricCanvas = new fabric.Canvas('main-editor-canvas', {
+        width: viewport.width,
+        height: viewport.height
+    });
+
+    // Set the PDF page as the background
+    fabric.Image.fromURL(bgImageData, function(img) {
+        fabricCanvas.setBackgroundImage(img, fabricCanvas.renderAll.bind(fabricCanvas));
+    });
+
+    setTool('text');
+}
+
+function setTool(tool) {
+    fabricCanvas.isDrawingMode = (tool === 'draw');
+    if (tool === 'text') {
+        fabricCanvas.defaultCursor = 'text';
+    }
+}
+
+// Add text on click
+fabricCanvas.on('mouse:down', function(options) {
+    if (fabricCanvas.isDrawingMode || options.target) return;
+    
+    const text = new fabric.IText('Tap to type', {
+        left: options.e.offsetX,
+        top: options.e.offsetY,
+        fontFamily: 'Arial',
+        fontSize: 20,
+        fill: '#000'
+    });
+    fabricCanvas.add(text);
+    fabricCanvas.setActiveObject(text);
+});
+
+function deleteObject() {
+    const active = fabricCanvas.getActiveObject();
+    if (active) fabricCanvas.remove(active);
+}
+
+function closeEditor() {
+    document.getElementById('editor-modal').style.display = 'none';
+    fabricCanvas.dispose();
+}
+
+async function saveEditedPdf() {
+    const { PDFDocument, rgb } = PDFLib;
+    const pdfDoc = await PDFDocument.load(originalPdfBytes);
+    const firstPage = pdfDoc.getPages()[0];
+    const { width, height } = firstPage.getSize();
+
+    // Scale factors
+    const scaleX = width / fabricCanvas.width;
+    const scaleY = height / fabricCanvas.height;
+
+    // Loop through Fabric objects and "Burn" them into the PDF
+    const objects = fabricCanvas.getObjects();
+    for (const obj of objects) {
+        if (obj.type === 'i-text') {
+            firstPage.drawText(obj.text, {
+                x: obj.left * scaleX,
+                y: height - (obj.top * scaleY) - (obj.fontSize * scaleY),
+                size: obj.fontSize * scaleX,
+                color: rgb(0, 0, 0)
+            });
+        }
+        // Drawing/Signatures would be converted to images and embedded similarly
+    }
+
+    const pdfBytes = await pdfDoc.save();
+    downloadBlob(pdfBytes, 'filled_form_76.pdf', 'application/pdf');
+}
