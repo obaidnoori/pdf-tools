@@ -264,6 +264,8 @@ async function saveMetadata() {
 }
 
 // --- FULL PDF EDITOR (Fabric.js) ---
+let isDrawingSignature = false;
+
 async function openEditor(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -289,82 +291,76 @@ async function openEditor(event) {
         
         fabricCanvas = new fabric.Canvas('main-editor-canvas', {
             width: viewport.width,
-            height: viewport.height
+            height: viewport.height,
+            selection: true
         });
 
         fabric.Image.fromURL(bgImageData, function(img) {
             fabricCanvas.setBackgroundImage(img, fabricCanvas.renderAll.bind(fabricCanvas));
         });
 
-        // Add text on double click
-        fabricCanvas.on('mouse:dblclick', function(options) {
-            if (fabricCanvas.isDrawingMode) return;
-            const text = new fabric.IText('Type here', {
+        // FIXED: Text Creation & Immediate Focus
+        fabricCanvas.on('mouse:down', function(options) {
+            if (fabricCanvas.isDrawingMode || options.target) return;
+            
+            // If in text mode, create an editable IText object
+            const text = new fabric.IText('Click to edit', {
                 left: options.pointer.x,
                 top: options.pointer.y,
                 fontFamily: 'Arial',
                 fontSize: 20,
-                fill: '#000'
+                fill: '#000',
+                editable: true
             });
             fabricCanvas.add(text);
             fabricCanvas.setActiveObject(text);
+            text.enterEditing(); // Automatically opens the keyboard/cursor
+            fabricCanvas.renderAll();
+        });
+
+        // Visual Signature Box Logic
+        fabricCanvas.on('path:created', function() {
+            // Find the temporary signature box and remove it once the user draws
+            const objects = fabricCanvas.getObjects('rect');
+            objects.forEach(obj => {
+                if (obj.isSignatureBox) fabricCanvas.remove(obj);
+            });
         });
 
     } catch (error) {
         console.error("Editor Error:", error);
-        alert("Could not open PDF.");
     }
 }
 
 function setTool(tool) {
     if (!fabricCanvas) return;
-    fabricCanvas.isDrawingMode = (tool === 'draw');
     
     document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
-    const activeBtn = (tool === 'draw') ? document.getElementById('btn-draw') : document.getElementById('btn-text');
-    if (activeBtn) activeBtn.classList.add('active');
-
+    
     if (tool === 'draw') {
+        fabricCanvas.isDrawingMode = true;
+        document.getElementById('btn-draw').classList.add('active');
+        
+        // Add a temporary "Sign Here" guide box
+        const signBox = new fabric.Rect({
+            left: 100,
+            top: 100,
+            width: 200,
+            height: 80,
+            fill: 'transparent',
+            stroke: '#2563eb',
+            strokeDashArray: [5, 5],
+            selectable: true,
+            isSignatureBox: true // Custom property to identify it
+        });
+        fabricCanvas.add(signBox);
+        fabricCanvas.setActiveObject(signBox);
+        
         fabricCanvas.freeDrawingBrush = new fabric.PencilBrush(fabricCanvas);
-        fabricCanvas.freeDrawingBrush.width = 2;
+        fabricCanvas.freeDrawingBrush.width = 3;
         fabricCanvas.freeDrawingBrush.color = "#000000";
+    } else {
+        fabricCanvas.isDrawingMode = false;
+        document.getElementById('btn-text').classList.add('active');
     }
-}
-
-function deleteObject() {
-    const active = fabricCanvas.getActiveObject();
-    if (active) fabricCanvas.remove(active);
-}
-
-function closeEditor() {
-    document.getElementById('editor-modal').style.display = 'none';
-    if (fabricCanvas) fabricCanvas.dispose();
-}
-
-async function saveEditedPdf() {
-    const { PDFDocument, rgb } = PDFLib;
-    const pdfDoc = await PDFDocument.load(originalPdfBytes);
-    const firstPage = pdfDoc.getPages()[0];
-    const { width, height } = firstPage.getSize();
-
-    const scaleX = width / fabricCanvas.width;
-    const scaleY = height / fabricCanvas.height;
-
-    const objects = fabricCanvas.getObjects();
-    for (const obj of objects) {
-        if (obj.type === 'i-text') {
-            firstPage.drawText(obj.text, {
-                x: obj.left * scaleX,
-                y: height - (obj.top * scaleY) - (obj.fontSize * scaleY),
-                size: obj.fontSize * scaleY,
-                color: rgb(0, 0, 0)
-            });
-        } else if (obj.type === 'path') {
-            // For drawings, it's safer to export the canvas overlay as an image and layer it
-            // but for simple text forms, text rendering is cleaner.
-        }
-    }
-
-    const pdfBytes = await pdfDoc.save();
-    downloadBlob(pdfBytes, 'edited_76supplier.pdf', 'application/pdf');
 }
