@@ -20,14 +20,12 @@
         <nav>
             <a href="#merger">Merge</a>
             <a href="#splitter">Split</a>
-            <a href="#organize">Organize</a>
-            <a href="#pdf-editor-section">Edit</a>
-            <a href="#" class="bmac-btn">☕ Support Project</a>
+            <a href="#img-to-pdf">Image to PDF</a>
+            <a href="#pdf-editor-section">Edit & Organize</a>
         </nav>
     </header>
 
     <main>
-        <!-- Hero / Privacy Section -->
         <section id="hero">
             <h1>Free & Private PDF Tools</h1>
             <p>Processing happens locally in your browser. Your files never touch our servers.</p>
@@ -42,9 +40,8 @@
                 <input type="file" id="merge-input" multiple accept=".pdf" onchange="handleMergeFiles(event)">
                 <label for="merge-input" class="custom-file-upload">Choose PDF Files</label>
             </div>
-            <ul id="file-list"></ul>
+            <ul id="file-list" class="sortable-list"></ul>
             <button class="action-btn" onclick="generateMergedPdf()">Merge & Download</button>
-            <p id="merge-status" class="status-text"></p>
         </section>
 
         <!-- Batch Splitter -->
@@ -56,11 +53,10 @@
             </div>
             <div class="input-group">
                 <label>Split every </label>
-                <input type="number" id="split-interval" value="10" min="1">
+                <input type="number" id="split-interval" value="1" min="1">
                 <span> pages</span>
             </div>
             <button class="action-btn" onclick="generateBatchSplit()">Split & Download ZIP</button>
-            <p id="split-status" class="status-text"></p>
         </section>
 
         <!-- Image to PDF -->
@@ -68,45 +64,21 @@
             <h2>Image to PDF</h2>
             <p>Convert JPG/PNG photos into a single PDF document.</p>
             <div class="upload-area">
-                <input type="file" id="img-input" multiple accept="image/*">
+                <input type="file" id="img-input" multiple accept="image/png, image/jpeg">
             </div>
             <button class="action-btn" onclick="generateImgToPdf()">Convert to PDF</button>
-        </section>
-
-        <!-- Protect PDF -->
-        <section id="protect" class="tool-box">
-            <h2>Protect PDF</h2>
-            <p>Add a password to lock your PDF file.</p>
-            <div class="upload-area">
-                <input type="file" id="protect-input" accept=".pdf">
-            </div>
-            <div class="input-group">
-                <input type="password" id="pdf-password" placeholder="Enter Password">
-            </div>
-            <button class="action-btn" onclick="lockPdf()">Set Password & Download</button>
-        </section>
-
-        <!-- Organize & Rotate -->
-        <section id="organize" class="tool-box">
-            <h2>Organize & Rotate Pages</h2>
-            <p>Upload a PDF to reorder or rotate individual pages.</p>
-            <div class="upload-area">
-                <input type="file" id="organize-input" accept=".pdf" onchange="loadPagesForOrg(event)">
-            </div>
-            <ul id="page-list" class="sortable-list"></ul>
-            <button class="action-btn" onclick="exportOrganizedPdf()">Save Organized PDF</button>
         </section>
 
         <!-- Watermark Tool -->
         <section id="watermark" class="tool-box">
             <h2>Add Watermark</h2>
-            <p>Overlay text on every page.</p>
+            <p>Overlay large, centered text on every page.</p>
             <div class="upload-area">
                 <input type="file" id="watermark-input" accept=".pdf">
             </div>
             <div class="input-group">
-                <input type="text" id="watermark-text" placeholder="Watermark Text (e.g. 76 Supplier Co)">
-                <input type="number" id="watermark-opacity" value="0.3" step="0.1" min="0.1" max="1" style="width:60px">
+                <input type="text" id="watermark-text" placeholder="WATERMARK TEXT">
+                <input type="number" id="watermark-opacity" value="0.3" step="0.1" min="0.1" max="1" style="width:70px">
                 <span>Opacity</span>
             </div>
             <button class="action-btn" onclick="applyWatermark()">Apply & Download</button>
@@ -128,24 +100,23 @@
 
         <!-- Full PDF Editor Section -->
         <section id="pdf-editor-section" class="tool-box">
-            <h2>Full PDF Editor</h2>
-            <p>Professional form-filling and signature suite.</p>
+            <h2>Full PDF Editor & Organizer</h2>
+            <p>Sign, fill forms, reorder, and delete pages.</p>
             <div class="upload-area">
                 <input type="file" id="editor-upload" accept=".pdf" onchange="openEditor(event)">
                 <label for="editor-upload" class="action-btn" style="cursor:pointer;">📁 Open PDF to Edit</label>
             </div>
 
             <!-- Full-Screen Editor Modal -->
-            <div id="editor-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.9); z-index:9999; overflow-y:auto; padding:10px;">
-                <div class="editor-content-container" style="background:white; max-width:1200px; margin:auto; border-radius:12px; overflow:hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); display: flex; flex-direction: column; height: 95vh;">
-                    
-                    <!-- Editor Toolbar (Undo Removed) -->
-                    <div class="editor-header" style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; padding:12px 25px; border-bottom:1px solid #cbd5e1;">
+            <div id="editor-modal" style="display:none;">
+                <div class="editor-content-container">
+                    <!-- Editor Toolbar -->
+                    <div class="editor-header">
                         <div style="display: flex; gap: 8px;">
                             <button class="tool-btn active" id="btn-select" onclick="setTool('select')">🖱️ Select</button>
                             <button class="tool-btn" id="btn-text" onclick="setTool('text')">⌨️ Add Text</button>
                             <button class="tool-btn" id="btn-draw" onclick="setTool('draw')">🖋️ Sign</button>
-                            <button class="tool-btn" onclick="deleteObject()" style="color:#e11d48; font-weight:bold;">🗑️ Delete</button>
+                            <button class="tool-btn" onclick="deleteObject()" style="color:#e11d48; font-weight:bold;">🗑️ Delete Element</button>
                         </div>
                         <div style="display: flex; align-items: center;">
                             <button class="action-btn" onclick="saveEditedPdf()" style="margin-right:10px;">💾 Burn & Download</button>
@@ -153,9 +124,9 @@
                         </div>
                     </div>
 
-                    <!-- Multi-Page Workspace Fix: Centered and full width -->
-                    <div id="canvas-wrapper" style="flex-grow: 1; background:#475569; padding:20px; overflow-y:scroll; display:flex; flex-direction:column; align-items:center;">
-                        <div id="canvas-container" style="width: 100%; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                    <!-- Multi-Page Workspace -->
+                    <div id="canvas-wrapper">
+                        <div id="canvas-container">
                             <!-- JS will inject dynamic page wrappers/canvases here -->
                         </div>
                     </div>
