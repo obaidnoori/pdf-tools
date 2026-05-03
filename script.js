@@ -224,5 +224,66 @@ function closeEditor() {
     const uploadInput = document.getElementById('editor-upload');
     if (uploadInput) uploadInput.value = "";
 }
+// --- SMOOTH UNDO SYSTEM ---
+function undo() {
+    if (undoStack.length > 0) {
+        // Prevent adding the undo action itself to the stack
+        isModifying = true; 
+        const previousState = undoStack.pop();
+        
+        fabricCanvas.loadFromJSON(previousState, function() {
+            fabricCanvas.renderAll();
+            isModifying = false;
+            console.log("Undo successful");
+        });
+    } else {
+        console.log("Nothing left to undo");
+    }
+}
 
+// --- FIXED SAVE/BURN FUNCTION ---
+async function saveEditedPdf() {
+    const status = document.getElementById('editor-status'); // Optional: add a status span in HTML
+    if(status) status.innerText = "Processing...";
+
+    try {
+        const { PDFDocument, rgb } = PDFLib;
+        
+        // FIX: Always use a fresh slice to avoid "detached ArrayBuffer"
+        const freshBuffer = originalPdfArrayBuffer.slice(0);
+        const pdfDoc = await PDFDocument.load(freshBuffer);
+        
+        const pages = pdfDoc.getPages();
+        const firstPage = pages[0];
+        const { width, height } = firstPage.getSize();
+
+        // Calculate scaling between the Fabric canvas and the actual PDF page size
+        const scaleX = width / fabricCanvas.width;
+        const scaleY = height / fabricCanvas.height;
+
+        const objects = fabricCanvas.getObjects();
+        
+        for (const obj of objects) {
+            if (obj.type === 'i-text' || obj.type === 'text') {
+                firstPage.drawText(obj.text, {
+                    x: obj.left * scaleX,
+                    // PDF coordinates start from bottom-left, Fabric from top-left
+                    y: height - (obj.top * scaleY) - (obj.fontSize * scaleY),
+                    size: obj.fontSize * scaleY,
+                    color: rgb(0, 0, 0)
+                });
+            }
+            // Add similar logic here for drawings/paths if needed
+        }
+
+        const pdfBytes = await pdfDoc.save();
+        downloadBlob(pdfBytes, '76_supplier_edited.pdf', 'application/pdf');
+        
+        if(status) status.innerText = "Download complete!";
+    } catch (err) {
+        console.error("Save Error:", err);
+        if(status) status.innerText = "Error saving PDF.";
+        alert("Failed to burn PDF: " + err.message);
+    }
+}
 // (Include Batch Splitter, ImgToPdf, etc. here if you still need them)
