@@ -3,25 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Free, private PDF tools. Merge, split, convert and edit PDFs entirely in your browser. No upload, no tracking, no data stored." />
-  <title>76 PDF Suite | Free & Private PDF Tools</title>
+  <meta name="description" content="Free, private PDF tools. Merge, split, convert and edit PDFs entirely in your browser." />
+  <title>76 PDF Suite | Private PDF Tools</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
-  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-  
-  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-  <script type="text/javascript">
-    (function(){
-       emailjs.init("YOUR_PUBLIC_KEY"); 
-    })();
-  </script>
+  <script src="lib/pdf.min.js"></script>
+  <script src="lib/fabric.min.js"></script>
+  <script src="lib/pdf-lib.min.js"></script>
+  <script src="lib/jszip.min.js"></script>
+  <script src="lib/sortable.min.js"></script>
 </head>
 <body>
 
@@ -31,39 +24,43 @@
 <aside id="sidebar">
   <div class="sidebar-logo">
     <div class="brand"><span>76</span> PDF Suite</div>
-    <div class="tagline">76 Supplier Company</div>
   </div>
 
-  <div class="sidebar-section-label">Overview</div>
+  <div class="sidebar-section-label">Tools</div>
   <button class="nav-item active" data-panel="home"><span class="nav-icon">🏠</span> Home</button>
-
-  <div class="sidebar-section-label">PDF Tools</div>
-  <button class="nav-item" data-panel="merge"><span class="nav-icon">🔗</span> Merge PDFs</button>
-  <button class="nav-item" data-panel="split"><span class="nav-icon">✂️</span> Split PDF</button>
+  <button class="nav-item" data-panel="merge"><span class="nav-icon">🔗</span> Merge</button>
+  <button class="nav-item" data-panel="split"><span class="nav-icon">✂️</span> Split</button>
   <button class="nav-item" data-panel="img-to-pdf"><span class="nav-icon">🖼️</span> Image to PDF</button>
   <button class="nav-item" data-panel="pdf-to-img"><span class="nav-icon">📸</span> PDF to Image</button>
   <button class="nav-item" data-panel="watermark"><span class="nav-icon">💧</span> Watermark</button>
-  <button class="nav-item" data-panel="metadata"><span class="nav-icon">🏷️</span> Edit Metadata</button>
-  <button class="nav-item" data-panel="editor"><span class="nav-icon">✏️</span> PDF Editor</button>
+  <button class="nav-item" data-panel="editor"><span class="nav-icon">✏️</span> Editor</button>
 
   <div class="sidebar-divider"></div>
-  <div class="sidebar-section-label">Company</div>
-  <button class="nav-item" data-panel="privacy"><span class="nav-icon">🔒</span> Privacy Policy</button>
-  <button class="nav-item" data-panel="contact"><span class="nav-icon">✉️</span> Contact Us</button>
+  <button class="nav-item" data-panel="privacy"><span class="nav-icon">🔒</span> Privacy</button>
 </aside>
 
 <div id="main">
   <div id="topbar">
     <span class="topbar-title" id="topbar-title">Home</span>
-    <div class="privacy-pill">🔒 No Upload · No Tracking · 100% Local</div>
+    <div class="privacy-pill">🔒 100% Browser-Based</div>
   </div>
 
   <div id="content-area">
     </div>
 
   <footer class="site-footer">
-    <div class="footer-motto">76 Supplier Company: Integrity in every byte, reliability in every tool.</div>
-    <div class="footer-copy">&copy; 2026 76 Supplier Company. All rights reserved.</div>
+    <div class="footer-content">
+      <div class="footer-brand">76 PDF Suite</div>
+      <p>Fast, secure, and private PDF management. No files ever leave your device.</p>
+      <div class="footer-links">
+        <a href="#" onclick="showPanel('privacy')">Privacy Policy</a>
+        <span class="dot">•</span>
+        <a href="#" onclick="showPanel('home')">Tools</a>
+      </div>
+      <div class="footer-copyright">
+        &copy; 2026 76 Supplier Company. All rights reserved.
+      </div>
+    </div>
   </footer>
 </div>
 
