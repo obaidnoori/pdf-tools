@@ -1,96 +1,86 @@
-/* ─────────────────────────────────────────
-   76 PDF Suite — script.js (Fixed Navigation)
-   ───────────────────────────────────────── */
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-const { PDFDocument, StandardFonts, rgb, degrees } = PDFLib;
-
-// 1. Navigation Logic
+/** --- NAVIGATION --- **/
 function showPanel(panelId) {
-  // Hide all panels
-  document.querySelectorAll('.panel').forEach(panel => {
-    panel.classList.remove('active');
-  });
+    // Hide all
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    // Show target
+    document.getElementById('panel-' + panelId).classList.add('active');
+    // Mobile menu close
+    document.getElementById('main-nav').classList.remove('open');
+    // Scroll to TOP
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 
-  // Show the requested panel
-  const targetPanel = document.getElementById('panel-' + panelId);
-  if (targetPanel) {
-    targetPanel.classList.add('active');
-  }
+function toggleMenu() {
+    document.getElementById('main-nav').classList.toggle('open');
+}
 
-  // Update Sidebar Active State
-  document.querySelectorAll('.nav-item').forEach(nav => {
-    nav.classList.remove('active');
-    if (nav.getAttribute('data-panel') === panelId) {
-      nav.classList.add('active');
+/** --- UTILS --- **/
+const { PDFDocument, StandardFonts, rgb } = PDFLib;
+function downloadBlob(data, name) {
+    const blob = new Blob([data], { type: "application/pdf" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = name; a.click();
+}
+
+/** --- MERGE --- **/
+let mergeFiles = [];
+function handleMergeSelect(e) {
+    mergeFiles = Array.from(e.target.files);
+    const list = document.getElementById('file-list');
+    list.innerHTML = '';
+    mergeFiles.forEach((f, i) => {
+        const li = document.createElement('li');
+        li.className = 'sortable-item';
+        li.textContent = f.name;
+        li.dataset.index = i;
+        list.appendChild(li);
+    });
+    new Sortable(list, { animation: 150 });
+}
+
+async function generateMergedPdf() {
+    if (mergeFiles.length < 2) return alert("Select 2+ files");
+    const doc = await PDFDocument.create();
+    const items = document.querySelectorAll('#file-list li');
+    for (let li of items) {
+        const file = mergeFiles[li.dataset.index];
+        const subDoc = await PDFDocument.load(await file.arrayBuffer());
+        const pages = await doc.copyPages(subDoc, subDoc.getPageIndices());
+        pages.forEach(p => doc.addPage(p));
     }
-  });
-
-  // Update Topbar Title
-  const titles = {
-    home: "Home", merge: "Merge PDFs", split: "Split PDF",
-    'img-to-pdf': "Image to PDF", 'pdf-to-img': "PDF to Image",
-    watermark: "Watermark", metadata: "Edit Metadata",
-    editor: "PDF Editor", privacy: "Privacy Policy", contact: "Contact Us"
-  };
-  document.getElementById('topbar-title').textContent = titles[panelId] || "76 PDF Suite";
-
-  // Auto-close sidebar on mobile after clicking
-  closeSidebar();
-  
-  // Scroll to top of content
-  window.scrollTo(0, 0);
+    downloadBlob(await doc.save(), "merged_76pdf.pdf");
 }
 
-// 2. Sidebar & Mobile Controls
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebar-overlay').classList.toggle('visible');
+/** --- SPLIT --- **/
+function updateSplitLabel(e) {
+    const f = e.target.files[0];
+    if (f) document.getElementById('split-filename').textContent = "Selected: " + f.name;
 }
 
-function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebar-overlay').classList.remove('visible');
+async function generateBatchSplit() {
+    const file = document.getElementById('split-input').files[0];
+    const interval = parseInt(document.getElementById('split-interval').value);
+    if (!file) return;
+    const zip = new JSZip();
+    const sourceDoc = await PDFDocument.load(await file.arrayBuffer());
+    for (let i = 0; i < sourceDoc.getPageCount(); i += interval) {
+        const newDoc = await PDFDocument.create();
+        const pages = await newDoc.copyPages(sourceDoc, Array.from({length: Math.min(interval, sourceDoc.getPageCount()-i)}, (_, k) => i + k));
+        pages.forEach(p => newDoc.addPage(p));
+        zip.file(`${file.name.split('.')[0]}_part_${(i/interval)+1}.pdf`, await newDoc.save());
+    }
+    const content = await zip.generateAsync({type:"blob"});
+    const url = window.URL.createObjectURL(content);
+    const a = document.createElement("a");
+    a.href = url; a.download = "split_76pdf.zip"; a.click();
 }
 
-// 3. Initialize Everything on Load
-document.addEventListener('DOMContentLoaded', () => {
-  // Sidebar Button Listeners
-  document.querySelectorAll('.nav-item').forEach(button => {
-    button.addEventListener('click', () => {
-      const panel = button.getAttribute('data-panel');
-      showPanel(panel);
-    });
-  });
-
-  // Home Grid "Tool Card" Listeners
-  document.querySelectorAll('.tool-card').forEach(card => {
-    card.addEventListener('click', () => {
-      const target = card.getAttribute('data-goto');
-      showPanel(target);
-    });
-  });
-
-  // Hamburger & Overlay
-  document.getElementById('hamburger-btn').addEventListener('click', toggleSidebar);
-  document.getElementById('sidebar-overlay').addEventListener('click', closeSidebar);
-
-  // Default View
-  showPanel('home');
-});
-
-// --- HELPER FUNCTIONS (Toast, File Size, etc.) ---
-function showToast(msg, type = '') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'show ' + type;
-  setTimeout(() => { t.className = ''; }, 3000);
+/** --- EDITOR (STUB) --- **/
+// Keeping editor simple for mobile stability
+async function openEditor(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    alert("Loading Editor for: " + file.name);
+    // You can re-insert the full fabric.js logic here
 }
-
-// Ensure the "Clear" buttons in the tool cards work
-document.querySelectorAll('.file-remove').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    const key = e.target.id.split('-')[0]; // gets 'split', 'wm', etc.
-    document.getElementById(key + '-info').classList.remove('visible');
-  });
-});
