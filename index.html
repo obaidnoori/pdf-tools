@@ -3,18 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Free, private PDF tools. Merge, split, convert and edit PDFs locally in your browser." />
-  <title>76 PDF Suite | Private PDF Tools</title>
+  <meta name="description" content="Free, private PDF tools. Merge, split, convert and edit PDFs entirely in your browser. No upload, no tracking, no data stored." />
+  <title>76 PDF Suite | Free & Private PDF Tools</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 
-  <script src="lib/pdf.min.js"></script>
-  <script src="lib/fabric.min.js"></script>
-  <script src="lib/pdf-lib.min.js"></script>
-  <script src="lib/jszip.min.js"></script>
-  <script src="lib/sortable.min.js"></script>
+  <script src="pdf.min.js"></script>
+  <script src="fabric.min.js"></script>
+  <script src="pdf-lib.min.js"></script>
+  <script src="jszip.min.js"></script>
+  <script src="sortable.min.js"></script>
 </head>
 <body>
 
@@ -27,36 +27,39 @@
     <div class="tagline">76 Supplier Company</div>
   </div>
 
-  <div class="sidebar-section-label">Tools</div>
+  <div class="sidebar-section-label">Overview</div>
   <button class="nav-item active" data-panel="home"><span class="nav-icon">🏠</span> Home</button>
-  <button class="nav-item" data-panel="merge"><span class="nav-icon">🔗</span> Merge</button>
-  <button class="nav-item" data-panel="split"><span class="nav-icon">✂️</span> Split</button>
+
+  <div class="sidebar-section-label">PDF Tools</div>
+  <button class="nav-item" data-panel="merge"><span class="nav-icon">🔗</span> Merge PDFs</button>
+  <button class="nav-item" data-panel="split"><span class="nav-icon">✂️</span> Split PDF</button>
   <button class="nav-item" data-panel="img-to-pdf"><span class="nav-icon">🖼️</span> Image to PDF</button>
   <button class="nav-item" data-panel="pdf-to-img"><span class="nav-icon">📸</span> PDF to Image</button>
   <button class="nav-item" data-panel="watermark"><span class="nav-icon">💧</span> Watermark</button>
-  <button class="nav-item" data-panel="editor"><span class="nav-icon">✏️</span> Editor</button>
+  <button class="nav-item" data-panel="metadata"><span class="nav-icon">🏷️</span> Edit Metadata</button>
+  <button class="nav-item" data-panel="editor"><span class="nav-icon">✏️</span> PDF Editor</button>
 
   <div class="sidebar-divider"></div>
-  <button class="nav-item" data-panel="privacy"><span class="nav-icon">🔒</span> Privacy</button>
+  <button class="nav-item" data-panel="privacy"><span class="nav-icon">🔒</span> Privacy Policy</button>
 </aside>
 
 <div id="main">
   <div id="topbar">
     <span class="topbar-title" id="topbar-title">Home</span>
-    <div class="privacy-pill">🔒 100% Browser-Based</div>
+    <div class="privacy-pill">🔒 100% Local · No Uploads</div>
   </div>
 
   <div id="content-area">
-    </div>
+     </div>
 
   <footer class="site-footer">
     <div class="footer-content">
       <div class="footer-brand">76 PDF Suite</div>
-      <p>Secure and private PDF management. Your files never leave your computer.</p>
+      <p>Integrity in every byte, reliability in every tool.</p>
       <div class="footer-links">
         <a href="#" onclick="showPanel('privacy')">Privacy Policy</a>
         <span class="dot">•</span>
-        <a href="#" onclick="showPanel('home')">Back to Tools</a>
+        <a href="#" onclick="showPanel('home')">Tools</a>
       </div>
       <div class="footer-copyright">
         &copy; 2026 76 Supplier Company. All rights reserved.
