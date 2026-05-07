@@ -2,7 +2,7 @@
    76 PDF Suite — script.js
    ───────────────────────────────────────── */
 
-// Updated to root path for main branch
+// Updated to root path as per your GitHub main branch
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
 
 const { PDFDocument, StandardFonts, rgb, degrees } = PDFLib;
@@ -18,11 +18,15 @@ function showPanel(panelId) {
     if (nav.getAttribute('data-panel') === panelId) nav.classList.add('active');
   });
 
-  const titles = { home: "Home", merge: "Merge PDFs", split: "Split PDF", 'img-to-pdf': "Image to PDF", editor: "PDF Editor", privacy: "Privacy Policy" };
+  const titles = { 
+    home: "Home", merge: "Merge PDFs", split: "Split PDF", 
+    'img-to-pdf': "Image to PDF", 'pdf-to-img': "PDF to Image",
+    watermark: "Watermark", editor: "PDF Editor", privacy: "Privacy Policy" 
+  };
   document.getElementById('topbar-title').textContent = titles[panelId] || "76 PDF Suite";
 
   closeSidebar();
-  window.scrollTo({ top: 0, behavior: 'smooth' }); // Navigation reset
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function toggleSidebar() {
@@ -37,6 +41,7 @@ function closeSidebar() {
 
 /* ── INITIALIZATION ── */
 document.addEventListener('DOMContentLoaded', () => {
+  // Navigation
   document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => showPanel(btn.getAttribute('data-panel')));
   });
@@ -45,13 +50,13 @@ document.addEventListener('DOMContentLoaded', () => {
     card.addEventListener('click', () => showPanel(card.getAttribute('data-goto')));
   });
 
+  // Sidebar Controls
   document.getElementById('hamburger-btn').addEventListener('click', toggleSidebar);
   document.getElementById('sidebar-overlay').addEventListener('click', closeSidebar);
 
   showPanel('home');
 });
 
-// Helper for UI feedback
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
   if (!t) return;
