@@ -1,86 +1,109 @@
-/** --- NAVIGATION --- **/
+/* ─────────────────────────────────────────
+   76 PDF Suite — script.js
+   ───────────────────────────────────────── */
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+const { PDFDocument, StandardFonts, rgb, degrees } = PDFLib;
+
+// 1. Navigation Logic (Fixed Scrolling)
 function showPanel(panelId) {
-    // Hide all
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    // Show target
-    document.getElementById('panel-' + panelId).classList.add('active');
-    // Mobile menu close
-    document.getElementById('main-nav').classList.remove('open');
-    // Scroll to TOP
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.querySelectorAll('.panel').forEach(panel => {
+    panel.classList.remove('active');
+  });
+
+  const targetPanel = document.getElementById('panel-' + panelId);
+  if (targetPanel) {
+    targetPanel.classList.add('active');
+  }
+
+  document.querySelectorAll('.nav-item').forEach(nav => {
+    nav.classList.remove('active');
+    if (nav.getAttribute('data-panel') === panelId) {
+      nav.classList.add('active');
+    }
+  });
+
+  const titles = {
+    home: "Home", merge: "Merge PDFs", split: "Split PDF",
+    'img-to-pdf': "Image to PDF", 'pdf-to-img': "PDF to Image",
+    watermark: "Watermark", metadata: "Edit Metadata",
+    editor: "PDF Editor", privacy: "Privacy Policy", contact: "Contact Us"
+  };
+  document.getElementById('topbar-title').textContent = titles[panelId] || "76 PDF Suite";
+
+  closeSidebar();
+  
+  // FIX: Ensure tool appears at top of screen on selection
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-function toggleMenu() {
-    document.getElementById('main-nav').classList.toggle('open');
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('visible');
 }
 
-/** --- UTILS --- **/
-const { PDFDocument, StandardFonts, rgb } = PDFLib;
-function downloadBlob(data, name) {
-    const blob = new Blob([data], { type: "application/pdf" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = name; a.click();
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('visible');
 }
 
-/** --- MERGE --- **/
-let mergeFiles = [];
-function handleMergeSelect(e) {
-    mergeFiles = Array.from(e.target.files);
-    const list = document.getElementById('file-list');
-    list.innerHTML = '';
-    mergeFiles.forEach((f, i) => {
-        const li = document.createElement('li');
-        li.className = 'sortable-item';
-        li.textContent = f.name;
-        li.dataset.index = i;
-        list.appendChild(li);
+// 2. Initialize Navigation & Contact
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.nav-item').forEach(button => {
+    button.addEventListener('click', () => showPanel(button.getAttribute('data-panel')));
+  });
+
+  document.querySelectorAll('.tool-card').forEach(card => {
+    card.addEventListener('click', () => showPanel(card.getAttribute('data-goto')));
+  });
+
+  document.getElementById('hamburger-btn').addEventListener('click', toggleSidebar);
+  document.getElementById('sidebar-overlay').addEventListener('click', closeSidebar);
+
+  // CONTACT FORM HANDLER
+  const contactBtn = document.getElementById('btn-contact');
+  if (contactBtn) {
+    contactBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const serviceID = 'YOUR_SERVICE_ID'; // Replace with yours
+      const templateID = 'YOUR_TEMPLATE_ID'; // Replace with yours
+
+      const params = {
+        from_name: document.getElementById('contact-name').value,
+        reply_to: document.getElementById('contact-email').value,
+        subject: document.getElementById('contact-subject').value,
+        message: document.getElementById('contact-message').value,
+      };
+
+      if (!params.from_name || !params.reply_to || !params.message) {
+        showToast("All fields are required", "error");
+        return;
+      }
+
+      contactBtn.innerText = "Sending...";
+      contactBtn.disabled = true;
+
+      emailjs.send(serviceID, templateID, params)
+        .then(() => {
+          showToast("Message Sent!", "success");
+          document.querySelectorAll('.contact-form input, .contact-form textarea').forEach(i => i.value = '');
+          contactBtn.innerText = "✉️ Send Message";
+          contactBtn.disabled = false;
+        }, (err) => {
+          showToast("Send failed.", "error");
+          contactBtn.innerText = "✉️ Send Message";
+          contactBtn.disabled = false;
+        });
     });
-    new Sortable(list, { animation: 150 });
-}
+  }
 
-async function generateMergedPdf() {
-    if (mergeFiles.length < 2) return alert("Select 2+ files");
-    const doc = await PDFDocument.create();
-    const items = document.querySelectorAll('#file-list li');
-    for (let li of items) {
-        const file = mergeFiles[li.dataset.index];
-        const subDoc = await PDFDocument.load(await file.arrayBuffer());
-        const pages = await doc.copyPages(subDoc, subDoc.getPageIndices());
-        pages.forEach(p => doc.addPage(p));
-    }
-    downloadBlob(await doc.save(), "merged_76pdf.pdf");
-}
+  showPanel('home');
+});
 
-/** --- SPLIT --- **/
-function updateSplitLabel(e) {
-    const f = e.target.files[0];
-    if (f) document.getElementById('split-filename').textContent = "Selected: " + f.name;
-}
-
-async function generateBatchSplit() {
-    const file = document.getElementById('split-input').files[0];
-    const interval = parseInt(document.getElementById('split-interval').value);
-    if (!file) return;
-    const zip = new JSZip();
-    const sourceDoc = await PDFDocument.load(await file.arrayBuffer());
-    for (let i = 0; i < sourceDoc.getPageCount(); i += interval) {
-        const newDoc = await PDFDocument.create();
-        const pages = await newDoc.copyPages(sourceDoc, Array.from({length: Math.min(interval, sourceDoc.getPageCount()-i)}, (_, k) => i + k));
-        pages.forEach(p => newDoc.addPage(p));
-        zip.file(`${file.name.split('.')[0]}_part_${(i/interval)+1}.pdf`, await newDoc.save());
-    }
-    const content = await zip.generateAsync({type:"blob"});
-    const url = window.URL.createObjectURL(content);
-    const a = document.createElement("a");
-    a.href = url; a.download = "split_76pdf.zip"; a.click();
-}
-
-/** --- EDITOR (STUB) --- **/
-// Keeping editor simple for mobile stability
-async function openEditor(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    alert("Loading Editor for: " + file.name);
-    // You can re-insert the full fabric.js logic here
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  setTimeout(() => { t.className = ''; }, 3000);
 }
