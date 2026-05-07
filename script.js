@@ -2,17 +2,46 @@
    76 PDF Suite — script.js
    ───────────────────────────────────────── */
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+/* ── LIBRARY SETUP (LOCAL PATH) ── */
+// Points to your 'lib' folder on the lib branch
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
+
 const { PDFDocument, StandardFonts, rgb, degrees } = PDFLib;
 
-// 1. Navigation Logic
+/* ── CONSTANTS ──────────────────────────── */
+const LIMITS = {
+  merge:  50,
+  split:  100,
+  img:    20,
+  p2i:    50,
+  wm:     100,
+  meta:   100,
+  editor: 50,
+};
+
+/* ── STATE ──────────────────────────────── */
+let mergeFilesArray = [];
+let imgFilesArray   = [];
+let splitFile       = null;
+let wmFile          = null;
+let metaFile        = null;
+let p2iFile         = null;
+let p2iFormat       = 'jpg';
+let p2iDpi          = 150;
+
+// Editor State
+let currentEditorFile = null;
+let editorPdfDoc      = null;
+let allCanvases       = {};
+
+/* ── NAVIGATION ─────────────────────────── */
 function showPanel(panelId) {
   // Hide all panels
   document.querySelectorAll('.panel').forEach(panel => {
     panel.classList.remove('active');
   });
 
-  // Show the requested panel
+  // Show target panel
   const targetPanel = document.getElementById('panel-' + panelId);
   if (targetPanel) {
     targetPanel.classList.add('active');
@@ -35,10 +64,10 @@ function showPanel(panelId) {
   };
   document.getElementById('topbar-title').textContent = titles[panelId] || "76 PDF Suite";
 
-  // Auto-close sidebar on mobile
+  // Mobile sidebar close
   closeSidebar();
   
-  // FIX: Scroll to top of content
+  // FIX: Reset scroll to top so tool starts at the top of the screen
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -52,30 +81,26 @@ function closeSidebar() {
   document.getElementById('sidebar-overlay').classList.remove('visible');
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Nav Click Listeners
-  document.querySelectorAll('.nav-item').forEach(button => {
-    button.addEventListener('click', () => {
-      showPanel(button.getAttribute('data-panel'));
-    });
-  });
-
-  // Home Card Listeners
-  document.querySelectorAll('.tool-card').forEach(card => {
-    card.addEventListener('click', () => {
-      showPanel(card.getAttribute('data-goto'));
-    });
-  });
-
-  document.getElementById('hamburger-btn').addEventListener('click', toggleSidebar);
-  document.getElementById('sidebar-overlay').addEventListener('click', closeSidebar);
-
-  showPanel('home');
-});
-
+/* ── UI HELPERS ─────────────────────────── */
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'show ' + type;
   setTimeout(() => { t.className = ''; }, 3000);
 }
+
+function formatBytes(bytes, decimals = 2) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+/* ── INITIALIZATION ─────────────────────── */
+document.addEventListener('DOMContentLoaded', () => {
+
+  // Sidebar Nav
+  document.querySelectorAll('.nav-item').forEach(button => {
+    button.addEventListener('click', () =>
