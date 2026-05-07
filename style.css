@@ -1,51 +1,49 @@
-:root {
-    --primary: #0f172a;
-    --accent: #3b82f6;
-    --bg: #f8fafc;
+/* ... Keep all existing root and base styles ... */
+
+/* FIX: Mobile File Selection Accessibility */
+.drop-zone {
+  position: relative;
+  overflow: hidden;
 }
 
-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: var(--bg); }
-
-.sticky-header {
-    background: white; padding: 1rem 5%; display: flex; justify-content: space-between;
-    align-items: center; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+/* We ensure the input spans the entire click area of the drop zone */
+.drop-zone input[type=file],
+.editor-launch-label input[type=file] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0; 
+  cursor: pointer;
+  z-index: 10;
 }
 
-#main-nav { display: flex; gap: 20px; }
-#main-nav a { text-decoration: none; color: var(--primary); font-weight: 500; }
-
-.panel { display: none; padding: 2rem 5%; min-height: 80vh; }
-.panel.active { display: block; }
-
-.hero { text-align: center; padding: 3rem 0; }
-.tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-.card { background: white; padding: 2rem; border-radius: 12px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-.card:hover { transform: translateY(-5px); border: 1px solid var(--accent); }
-
-.tool-box { background: white; padding: 2rem; border-radius: 12px; max-width: 600px; margin: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-
-/* MOBILE FIX: Make input clickable but invisible */
-.custom-upload {
-    display: block; background: #e2e8f0; border: 2px dashed #cbd5e1;
-    padding: 3rem; text-align: center; border-radius: 8px; cursor: pointer; position: relative;
-}
-.custom-upload input[type="file"] {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;
+/* FOOTER */
+.site-footer {
+  background: var(--sidebar-bg);
+  color: white;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  margin-top: auto;
+  border-top: 1px solid rgba(255,255,255,0.1);
 }
 
-.action-btn {
-    width: 100%; background: var(--accent); color: white; border: none; padding: 1rem;
-    border-radius: 8px; font-weight: bold; margin-top: 1rem; cursor: pointer;
+.footer-motto {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.1rem;
+  font-style: italic;
+  margin-bottom: 0.5rem;
+  opacity: 0.9;
 }
 
-.contact-form input, .contact-form textarea {
-    width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 6px;
+.footer-copy {
+  font-size: 0.85rem;
+  opacity: 0.7;
 }
 
-footer { background: var(--primary); color: white; text-align: center; padding: 3rem; margin-top: 4rem; }
-
-@media (max-width: 768px) {
-    #main-nav { display: none; flex-direction: column; position: absolute; top: 60px; left: 0; width: 100%; background: white; padding: 20px; }
-    #main-nav.open { display: flex; }
-    .hamburger { display: block; font-size: 1.5rem; cursor: pointer; }
+@media (min-width: 1024px) {
+  .site-footer {
+    padding-left: 2rem;
+  }
 }
