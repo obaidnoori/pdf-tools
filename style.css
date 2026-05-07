@@ -1,55 +1,60 @@
-/* ... All your previous root and base styles ... */
-
-/* FIX: Mobile File Tapping & Layout */
-.drop-zone {
-  position: relative;
-  overflow: hidden;
-}
-
-/* Ensures the input covers the whole area so it's clickable on mobile */
-.drop-zone input[type=file],
-.editor-launch-label input[type=file] {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0; 
-  cursor: pointer;
-  z-index: 10;
-}
-
 /* FOOTER STYLING */
 .site-footer {
-  background: var(--sidebar-bg);
-  color: white;
-  text-align: center;
-  padding: 3rem 1.5rem;
+  background: #ffffff;
+  color: var(--text-secondary);
+  padding: 4rem 2rem;
+  border-top: 1px solid var(--border);
   margin-top: auto;
-  border-top: 1px solid rgba(255,255,255,0.1);
 }
 
-.footer-motto {
+.footer-content {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.footer-brand {
   font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.1rem;
-  font-style: italic;
-  margin-bottom: 0.5rem;
-  opacity: 0.9;
+  font-weight: 700;
+  font-size: 1.5rem;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
 }
 
-.footer-copy {
+.footer-content p {
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.footer-links {
+  margin-bottom: 2rem;
+}
+
+.footer-links a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.footer-links a:hover {
+  opacity: 0.8;
+}
+
+.footer-links .dot {
+  margin: 0 10px;
+  color: var(--border);
+}
+
+.footer-copyright {
   font-size: 0.85rem;
-  opacity: 0.7;
+  border-top: 1px solid var(--border);
+  padding-top: 2rem;
+  color: var(--text-secondary);
 }
 
-/* RESPONSIVE FOOTER FIX */
-@media (min-width: 1024px) {
-  .site-footer {
-    padding-left: 2rem;
-  }
-}
-
-/* Ensure #main is a flex container to push footer down */
+/* Ensure #main grows to fill screen */
 #main {
   display: flex;
   flex-direction: column;
