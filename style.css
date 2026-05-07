@@ -1,12 +1,12 @@
-/* ... Keep all existing root and base styles ... */
+/* ... All your previous root and base styles ... */
 
-/* FIX: Mobile File Selection Accessibility */
+/* FIX: Mobile File Tapping & Layout */
 .drop-zone {
   position: relative;
   overflow: hidden;
 }
 
-/* We ensure the input spans the entire click area of the drop zone */
+/* Ensures the input covers the whole area so it's clickable on mobile */
 .drop-zone input[type=file],
 .editor-launch-label input[type=file] {
   position: absolute;
@@ -19,7 +19,7 @@
   z-index: 10;
 }
 
-/* FOOTER */
+/* FOOTER STYLING */
 .site-footer {
   background: var(--sidebar-bg);
   color: white;
@@ -42,8 +42,16 @@
   opacity: 0.7;
 }
 
+/* RESPONSIVE FOOTER FIX */
 @media (min-width: 1024px) {
   .site-footer {
     padding-left: 2rem;
   }
+}
+
+/* Ensure #main is a flex container to push footer down */
+#main {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
