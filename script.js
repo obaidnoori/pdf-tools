@@ -2,21 +2,10 @@
    76 PDF Suite — script.js
    ───────────────────────────────────────── */
 
-// CRITICAL: Point to local worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
+// Updated to root path for main branch
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
 
 const { PDFDocument, StandardFonts, rgb, degrees } = PDFLib;
-
-/* ── STATE ── */
-let mergeFilesArray = [];
-let imgFilesArray   = [];
-let splitFile       = null;
-let wmFile          = null;
-let metaFile        = null;
-let p2iFile         = null;
-let currentEditorFile = null;
-let editorPdfDoc      = null;
-let allCanvases       = {};
 
 /* ── NAVIGATION ── */
 function showPanel(panelId) {
@@ -33,7 +22,7 @@ function showPanel(panelId) {
   document.getElementById('topbar-title').textContent = titles[panelId] || "76 PDF Suite";
 
   closeSidebar();
-  window.scrollTo({ top: 0, behavior: 'smooth' }); // Fixes scroll position
+  window.scrollTo({ top: 0, behavior: 'smooth' }); // Navigation reset
 }
 
 function toggleSidebar() {
@@ -46,7 +35,7 @@ function closeSidebar() {
   document.getElementById('sidebar-overlay').classList.remove('visible');
 }
 
-/* ── INIT ── */
+/* ── INITIALIZATION ── */
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.nav-item').forEach(btn => {
     btn.addEventListener('click', () => showPanel(btn.getAttribute('data-panel')));
@@ -62,8 +51,11 @@ document.addEventListener('DOMContentLoaded', () => {
   showPanel('home');
 });
 
+// Helper for UI feedback
 function showToast(msg, type = '') {
   const t = document.getElementById('toast');
-  t.textContent = msg; t.className = 'show ' + type;
+  if (!t) return;
+  t.textContent = msg;
+  t.className = 'show ' + type;
   setTimeout(() => { t.className = ''; }, 3000);
 }
