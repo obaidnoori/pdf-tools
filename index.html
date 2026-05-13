@@ -10,10 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="main.css">
 
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 </head>
@@ -53,7 +51,6 @@
   </div>
 
   <div id="content-area">
-
     <div id="panel-home" class="panel active">
       <div class="panel-header">
         <h1>Free &amp; Private PDF Tools</h1>
@@ -264,9 +261,6 @@
         <div class="privacy-item"><div class="privacy-item-icon">📡</div><h3>Network Connections Blocked</h3><p>Our Content Security Policy blocks all outgoing network connections from tool operations, making data leakage technically impossible.</p></div>
         <div class="privacy-item"><div class="privacy-item-icon">🛠️</div><h3>Open Source Libraries</h3><p>We use trusted open-source libraries: pdf-lib, PDF.js, and JSZip. All processing code is publicly auditable.</p></div>
       </div>
-      <div class="card" style="margin-top:20px;">
-        <p class="policy-footer"><strong>Last updated: 2026.</strong> This policy applies to all tools on this site. If you have questions, please contact us. 76 PDF Suite is a project by <strong>76 Supplier Company</strong>.</p>
-      </div>
     </div>
 
     <div id="panel-contact" class="panel">
@@ -288,8 +282,17 @@
         </div>
       </div>
     </div>
-
   </div>
+  
+  <footer class="site-footer">
+    <div class="footer-brand">76 PDF Suite</div>
+    <div class="footer-links">
+      <a href="#" onclick="showPanel('privacy')">Privacy Policy</a>
+      <span class="dot">·</span>
+      <a href="#" onclick="showPanel('contact')">Contact</a>
+    </div>
+    <div class="footer-copyright">© 2026 76 Supplier Company. All rights reserved.</div>
+  </footer>
 </div>
 
 <div id="toast"></div>
